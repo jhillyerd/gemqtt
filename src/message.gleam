@@ -1,6 +1,8 @@
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
+import gleam/erlang/atom
+import gleam/erlang/process
 import gleam/option.{type Option}
 import gleam/result
 
@@ -30,6 +32,22 @@ pub type PublishField {
   Topic
 }
 
+/// Configure a selector to receive messages from MQTT clients.
+///
+/// Note this will receive messages from all MQTT clients that the process
+/// controls, rather than any specific one. If you wish to only handle
+/// messages from one client then use one process per client.
+///
+pub fn selecting(
+  selector: process.Selector(t),
+  mapper: fn(Message) -> t,
+) -> process.Selector(t) {
+  let publish = atom.create_from_string("publish")
+
+  selector
+  |> process.selecting_record2(publish, unsafe_coerce_message(mapper))
+}
+
 pub fn from_dynamic(
   published: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
@@ -50,4 +68,11 @@ pub fn from_dynamic(
     retain: retain,
     topic: topic,
   ))
+}
+
+fn unsafe_coerce_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
+  fn(published) -> t {
+    let assert Ok(message) = from_dynamic(published)
+    mapper(message)
+  }
 }

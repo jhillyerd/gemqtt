@@ -15,11 +15,11 @@ pub fn main() {
 
   let assert Ok(client) =
     new(host)
-    |> set_port(41884)
+    |> set_port(41_883)
     |> start_link
 
   let assert Ok(_) = connect(client)
-  let assert Ok(_) = emqtt_subscribe(client, "#")
+  let assert Ok(_) = subscribe(client, "#")
 
   case listen() {
     Ok(_) -> io.print_error("happy exit")
@@ -176,7 +176,30 @@ pub fn disconnect(client: Pid) -> Result(Dynamic, Dynamic)
 
 // TODO: Subscription options!
 @external(erlang, "emqtt_ffi", "subscribe")
-fn emqtt_subscribe(client: Pid, topic: String) -> Result(Dynamic, Dynamic)
+pub fn subscribe(client: Pid, topic: String) -> Result(Dynamic, Dynamic)
+
+@external(erlang, "emqtt_ffi", "unsubscribe")
+pub fn unsubscribe(
+  client: Pid,
+  topics: List(String),
+) -> Result(Dynamic, Dynamic)
+
+// TODO: Publish options!
+// TODO: Topic String|Charlist|Binary type?
+pub fn publish(
+  client: Pid,
+  topic: String,
+  payload: BitArray,
+) -> Result(Dynamic, Dynamic) {
+  publish_(client, topic, payload)
+}
+
+@external(erlang, "emqtt_ffi", "publish")
+pub fn publish_(
+  client: Pid,
+  topic: String,
+  payload: BitArray,
+) -> Result(Dynamic, Dynamic)
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)
