@@ -1,12 +1,15 @@
 -module(emqtt_ffi).
 
--export([start_link/1, connect/1, stop/1, subscribe/2]).
+-export([start_link/1, connect/1, disconnect/1, stop/1, subscribe/2]).
 
 start_link(Options) ->
   emqtt:start_link(Options).
 
 connect(ConnPid) ->
-  emqtt:connect(ConnPid).
+  normalize(emqtt:connect(ConnPid)).
+
+disconnect(ConnPid) ->
+  normalize(emqtt:disconnect(ConnPid)).
 
 subscribe(ConnPid, Topic) ->
   SubOpts = [{qos, 1}],
@@ -22,5 +25,8 @@ subscribe(ConnPid, Topic) ->
 stop(ConnPid) ->
   normalize(emqtt:stop(ConnPid)).
 
+% Normalize emqtt return values for Result(t, e).
 normalize(ok) -> {ok, nil};
-normalize({ok, T}) -> {ok, T}.
+normalize({ok, undefined}) -> {ok, nil};
+normalize({ok, T}) -> {ok, T};
+normalize({error, T}) -> {error, T}.
