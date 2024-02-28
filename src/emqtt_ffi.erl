@@ -3,7 +3,8 @@
 -export([start_link/1, connect/1, disconnect/1, publish/3, stop/1, subscribe/2, unsubscribe/2]).
 
 start_link(Options) ->
-  emqtt:start_link(Options).
+  { options, OptMap } = Options,
+  emqtt:start_link(OptMap).
 
 connect(ConnPid) ->
   normalize(emqtt:connect(ConnPid)).

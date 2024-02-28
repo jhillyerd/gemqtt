@@ -85,20 +85,8 @@ pub fn set_port(opts: Options, port: Int) -> Options {
   set_option(opts, Port, port)
 }
 
-pub fn start_link(opts: Options) -> Result(Pid, Dynamic) {
-  let Options(options) = opts
-  emqtt_start_link(options)
-}
-
-fn set_option(opts: Options, name: EmqttOptionName, value: t) -> Options {
-  let Options(options) = opts
-  Options(dict.insert(options, name, dynamic.from(value)))
-}
-
 @external(erlang, "emqtt_ffi", "start_link")
-fn emqtt_start_link(
-  opts: Dict(EmqttOptionName, Dynamic),
-) -> Result(Pid, Dynamic)
+pub fn start_link(opts: Options) -> Result(Pid, Dynamic)
 
 @external(erlang, "emqtt_ffi", "connect")
 pub fn connect(client: Pid) -> Result(Nil, ConnectError)
@@ -135,3 +123,8 @@ pub fn publish_(
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)
+
+fn set_option(opts: Options, name: EmqttOptionName, value: t) -> Options {
+  let Options(options) = opts
+  Options(dict.insert(options, name, dynamic.from(value)))
+}
