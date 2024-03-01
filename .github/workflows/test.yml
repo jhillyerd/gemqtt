@@ -3,21 +3,31 @@ name: test
 on:
   push:
     branches:
-      - master
       - main
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MQTT_PORT: 41883
     steps:
       - uses: actions/checkout@v3
+      - uses: JarvusInnovations/background-action@v1
+        name: Background mosquitto server
+        with:
+          run: |
+            sudo apt install mosquitto -y
+            /usr/sbin/mosquitto -p $MQTT_PORT &
+          tail: true
+          wait-on: tcp:localhost:${{ env.MQTT_PORT }}
+          wait-for: 2m
+          log-output-if: true
       - uses: erlef/setup-beam@v1
         with:
           otp-version: "26.0.2"
           gleam-version: "1.0.0-rc2"
           rebar3-version: "3"
-          # elixir-version: "1.15.4"
       - run: gleam deps download
       - run: gleam test
       - run: gleam format --check src test
