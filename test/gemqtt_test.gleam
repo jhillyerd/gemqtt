@@ -9,7 +9,7 @@ import message
 
 const mqtt_server_port = 41_883
 
-const connect_timeout_seconds = 2
+const connect_timeout_seconds = 4
 
 const recv_timeout_millis = 2000
 
