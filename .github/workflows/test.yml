@@ -3,21 +3,31 @@ name: test
 on:
   push:
     branches:
-      - master
       - main
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MQTT_PORT: 41883
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install and run mosquitto server
+        run: |
+          sudo apt install mosquitto mosquitto-clients -y
+          /usr/sbin/mosquitto -p $MQTT_PORT &
+
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: "26.0.2"
+          otp-version: "25.3.2"
           gleam-version: "1.0.0-rc2"
           rebar3-version: "3"
-          # elixir-version: "1.15.4"
+
+      - name: Check MQTT server health
+        run: timeout 5 mosquitto_sub -p $MQTT_PORT -t probe -i probe -E
+
       - run: gleam deps download
       - run: gleam test
       - run: gleam format --check src test
