@@ -9,21 +9,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: ubuntu:jammy
     env:
       MQTT_PORT: 41883
+    services:
+      mqtt:
+        image: eclipse-mosquitto:2.0
+        ports:
+          - 41883:1883
     steps:
       - uses: actions/checkout@v3
-      # - uses: JarvusInnovations/background-action@v1
-      #   name: Background mosquitto server
-      #   with:
-      #     run: |
-      #       sudo apt install mosquitto -y
-      #       /usr/sbin/mosquitto -p $MQTT_PORT &
-      #     tail: true
-      #     wait-on: tcp:localhost:${{ env.MQTT_PORT }}
-      #     wait-for: 2m
-      #     log-output-if: true
       - uses: erlef/setup-beam@v1
         with:
           otp-version: "26.0.2"
