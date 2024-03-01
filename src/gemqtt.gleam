@@ -37,8 +37,43 @@ pub type EmqttOptionName {
   Properties
 }
 
+/// Errors that can occur when working with TCP sockets.
+///
+/// For more information on these errors see the Erlang documentation:
+/// - https://www.erlang.org/doc/man/inet#type-posix
+///
 pub type ConnectError {
+  // https://www.erlang.org/doc/man/inet#type-posix
+  Closed
+  Timeout
+  Eaddrinuse
+  Eaddrnotavail
+  Eafnosupport
+  Ealready
+  Econnaborted
   Econnrefused
+  Econnreset
+  Edestaddrreq
+  Ehostdown
+  Ehostunreach
+  Einprogress
+  Eisconn
+  Emsgsize
+  Enetdown
+  Enetunreach
+  Enopkg
+  Enoprotoopt
+  Enotconn
+  Enotty
+  Enotsock
+  Eproto
+  Eprotonosupport
+  Eprototype
+  Esocktnosupport
+  Etimedout
+  Ewouldblock
+  Exbadport
+  Exbadseq
   Nxdomain
 }
 
