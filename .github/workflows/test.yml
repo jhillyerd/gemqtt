@@ -16,11 +16,12 @@ jobs:
         image: eclipse-mosquitto:2.0
         ports:
           - 41883:1883
+        options: >-
+          --health-cmd "timeout 5 mosquitto_sub -t probe -i probe -E"
     steps:
       - uses: actions/checkout@v3
       - uses: erlef/setup-beam@v1
         with:
-          # bump
           otp-version: "25.3.2"
           gleam-version: "1.0.0-rc2"
           rebar3-version: "3"
