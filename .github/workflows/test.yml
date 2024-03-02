@@ -17,7 +17,7 @@ jobs:
         ports:
           - 41883:1883
         volumes:
-          - etc/ci/mosquitto:/mosquitto/config
+          - ./etc/ci/mosquitto:/mosquitto/config
         options: >-
           --health-cmd "timeout 5 mosquitto_sub -t probe -i probe -E"
     steps:
