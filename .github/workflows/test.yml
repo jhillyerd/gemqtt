@@ -12,7 +12,7 @@ jobs:
     env:
       MQTT_PORT: 41883
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install and run mosquitto server
         run: |
