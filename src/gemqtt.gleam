@@ -2,6 +2,7 @@ import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
+import gleam/option
 
 /// Errors that can occur when working with MQTT connections.
 ///
@@ -46,6 +47,17 @@ pub opaque type Options {
 
 pub type Properties {
   Properties(Dict(String, String))
+}
+
+pub type Qos {
+  AtMostOnce
+  AtLeastOnce
+  ExactlyOnce
+}
+
+pub type PublishOption {
+  Retain(Bool)
+  Qos(Qos)
 }
 
 type EmqttOptionName {
@@ -147,21 +159,21 @@ pub fn publish(
   topic: String,
   payload: BitArray,
   properties: Properties,
-) -> Result(Dynamic, Error) {
+  pub_opts: List(PublishOption),
+) -> Result(option.Option(Int), Error) {
   let Properties(props) = properties
-  let opts = []
 
-  publish_(client, topic, props, payload, opts)
+  publish_(client, topic, props, payload, pub_opts)
 }
 
 @external(erlang, "emqtt_ffi", "publish")
-pub fn publish_(
+fn publish_(
   client: Pid,
   topic: String,
   props: Dict(String, String),
   payload: BitArray,
-  opts: List(Nil),
-) -> Result(Dynamic, Error)
+  opts: List(PublishOption),
+) -> Result(option.Option(Int), Error)
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)

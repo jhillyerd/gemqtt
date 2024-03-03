@@ -1,5 +1,7 @@
 # gemqtt
 
+WARNING: this is a work in progress, and has not yet been published.
+
 [![Package Version](https://img.shields.io/hexpm/v/gemqtt)](https://hex.pm/packages/gemqtt)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gemqtt/)
 

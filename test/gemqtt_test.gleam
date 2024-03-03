@@ -114,8 +114,10 @@ pub fn roundtrip_test() {
   let assert Ok(_) = gemqtt.subscribe(client, topic)
 
   // Publish a test message.
-  let props = dict.new() |> dict.insert("bar", "baz") |> gemqtt.Properties
-  let assert Ok(_) = gemqtt.publish(client, topic, msg_content, props)
+  let props =
+    dict.new()
+    |> gemqtt.Properties
+  let assert Ok(_) = gemqtt.publish(client, topic, msg_content, props, [])
 
   // Attempt to receive that message.
   let assert Ok(Ok(got_msg)) =

@@ -23,7 +23,7 @@ unsubscribe(ConnPid, Topics) ->
   normalize(emqtt:unsubscribe(ConnPid, #{}, Topics)).
 
 publish(ConnPid, Topic, Props, Payload, Opts) ->
-  normalize(emqtt:publish(ConnPid, Topic, Props, Payload, Opts)).
+  normalize_option(emqtt:publish(ConnPid, Topic, Props, Payload, Opts)).
 
 stop(ConnPid) ->
   normalize(emqtt:stop(ConnPid)).
@@ -34,6 +34,11 @@ normalize({ok, undefined}) -> {ok, nil};
 normalize({ok, T}) -> {ok, T};
 normalize({ok, T, U}) -> {ok, {T, U}};
 normalize({error, T}) -> {error, T}.
+
+% Normalize emqtt return values for Result(Option(t), e).
+normalize_option(ok) -> {ok, none};
+normalize_option({ok, T}) -> {ok, {some, T}};
+normalize_option({error, T}) -> {error, T}.
 
 % For decoding Pid in messsages.
 decode_pid(Data) when is_pid(Data) -> {ok, Data};
