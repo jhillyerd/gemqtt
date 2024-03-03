@@ -1,6 +1,9 @@
 -module(emqtt_ffi).
 
--export([start_link/1, connect/1, disconnect/1, publish/3, stop/1, subscribe/2, unsubscribe/2]).
+-export([
+  connect/1, decode_pid/1, disconnect/1, publish/3, start_link/1, stop/1,
+  subscribe/2, unsubscribe/2
+]).
 
 start_link(Options) ->
   { options, OptMap } = Options,
@@ -31,3 +34,11 @@ normalize({ok, undefined}) -> {ok, nil};
 normalize({ok, T}) -> {ok, T};
 normalize({ok, T, U}) -> {ok, {T, U}};
 normalize({error, T}) -> {error, T}.
+
+% For decoding Pid in messsages.
+decode_pid(Data) when is_pid(Data) -> {ok, Data};
+decode_pid(nil) -> decode_pid_error(<<"Nil">>);
+decode_pid(_) -> decode_pid_error(<<"Some other type">>).
+
+decode_pid_error(Got) ->
+  {error, [{decode_error, "Pid", Got, []}]}.
