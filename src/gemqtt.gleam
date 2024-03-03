@@ -3,38 +3,34 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
 
-pub opaque type Options {
-  Options(Dict(EmqttOptionName, Dynamic))
-}
-
-pub type EmqttOptionName {
-  Name
+type EmqttOptionName {
+  // Name
   Owner
   Host
   Port
-  TcpOpts
-  Ssl
-  SslOpts
-  WsPath
+  // TcpOpts
+  // Ssl
+  // SslOpts
+  // WsPath
   ConnectTimeout
-  BridgeMode
+  // BridgeMode
   Clientid
   CleanStart
   Username
   Password
-  ProtoVer
-  Keepalive
-  MaxInflight
-  RetryInterval
-  WillTopic
-  WillPayload
-  WillRetain
-  WillQos
-  WillProps
+  // ProtoVer
+  // Keepalive
+  // MaxInflight
+  // RetryInterval
+  // WillTopic
+  // WillPayload
+  // WillRetain
+  // WillQos
+  // WillProps
   AutoAck
-  AckTimeout
-  ForcePing
-  Properties
+  // AckTimeout
+  // ForcePing
+  // Properties
 }
 
 /// Errors that can occur when working with TCP sockets.
@@ -75,6 +71,10 @@ pub type ConnectError {
   Exbadport
   Exbadseq
   Nxdomain
+}
+
+pub opaque type Options {
+  Options(Dict(EmqttOptionName, Dynamic))
 }
 
 pub fn new(host: String) -> Options {

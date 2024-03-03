@@ -18,7 +18,7 @@ pub type Message {
   )
 }
 
-type PublishField {
+type PublishFieldName {
   ClientPid
   Dup
   PacketId
