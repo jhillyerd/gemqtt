@@ -1,7 +1,7 @@
 -module(emqtt_ffi).
 
 -export([
-  connect/1, decode_pid/1, disconnect/1, publish/3, start_link/1, stop/1,
+  connect/1, decode_pid/1, disconnect/1, publish/5, start_link/1, stop/1,
   subscribe/2, unsubscribe/2
 ]).
 
@@ -22,8 +22,8 @@ subscribe(ConnPid, Topic) ->
 unsubscribe(ConnPid, Topics) ->
   normalize(emqtt:unsubscribe(ConnPid, #{}, Topics)).
 
-publish(ConnPid, Topic, Payload) ->
-  normalize(emqtt:publish(ConnPid, Topic, Payload)).
+publish(ConnPid, Topic, Props, Payload, Opts) ->
+  normalize(emqtt:publish(ConnPid, Topic, Props, Payload, Opts)).
 
 stop(ConnPid) ->
   normalize(emqtt:stop(ConnPid)).

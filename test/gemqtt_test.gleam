@@ -1,5 +1,6 @@
 import gemqtt
 import gleam/bit_array
+import gleam/dict
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/result
@@ -113,7 +114,8 @@ pub fn roundtrip_test() {
   let assert Ok(_) = gemqtt.subscribe(client, topic)
 
   // Publish a test message.
-  let assert Ok(_) = gemqtt.publish(client, topic, msg_content)
+  let props = dict.new() |> dict.insert("bar", "baz") |> gemqtt.Properties
+  let assert Ok(_) = gemqtt.publish(client, topic, msg_content, props)
 
   // Attempt to receive that message.
   let assert Ok(Ok(got_msg)) =

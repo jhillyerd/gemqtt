@@ -3,36 +3,6 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
 
-type EmqttOptionName {
-  // Name
-  Owner
-  Host
-  Port
-  // TcpOpts
-  // Ssl
-  // SslOpts
-  // WsPath
-  ConnectTimeout
-  // BridgeMode
-  Clientid
-  CleanStart
-  Username
-  Password
-  // ProtoVer
-  // Keepalive
-  // MaxInflight
-  // RetryInterval
-  // WillTopic
-  // WillPayload
-  // WillRetain
-  // WillQos
-  // WillProps
-  AutoAck
-  // AckTimeout
-  // ForcePing
-  // Properties
-}
-
 /// Errors that can occur when working with TCP sockets.
 ///
 /// For more information on these errors see the Erlang documentation:
@@ -75,6 +45,40 @@ pub type ConnectError {
 
 pub opaque type Options {
   Options(Dict(EmqttOptionName, Dynamic))
+}
+
+pub type Properties {
+  Properties(Dict(String, String))
+}
+
+type EmqttOptionName {
+  // Name
+  Owner
+  Host
+  Port
+  // TcpOpts
+  // Ssl
+  // SslOpts
+  // WsPath
+  ConnectTimeout
+  // BridgeMode
+  Clientid
+  CleanStart
+  Username
+  Password
+  // ProtoVer
+  // Keepalive
+  // MaxInflight
+  // RetryInterval
+  // WillTopic
+  // WillPayload
+  // WillRetain
+  // WillQos
+  // WillProps
+  AutoAck
+  // AckTimeout
+  // ForcePing
+  // Properties
 }
 
 pub fn new(host: String) -> Options {
@@ -145,16 +149,22 @@ pub fn publish(
   client: Pid,
   topic: String,
   payload: BitArray,
-) -> Result(Dynamic, Dynamic) {
-  publish_(client, topic, payload)
+  properties: Properties,
+) -> Result(Dynamic, Error) {
+  let Properties(props) = properties
+  let opts = []
+
+  publish_(client, topic, props, payload, opts)
 }
 
 @external(erlang, "emqtt_ffi", "publish")
 pub fn publish_(
   client: Pid,
   topic: String,
+  props: Dict(String, String),
   payload: BitArray,
-) -> Result(Dynamic, Dynamic)
+  opts: List(Nil),
+) -> Result(Dynamic, Error)
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)
