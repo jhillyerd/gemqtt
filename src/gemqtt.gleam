@@ -3,12 +3,9 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
 
-/// Errors that can occur when working with TCP sockets.
+/// Errors that can occur when working with MQTT connections.
 ///
-/// For more information on these errors see the Erlang documentation:
-/// - https://www.erlang.org/doc/man/inet#type-posix
-///
-pub type ConnectError {
+pub type Error {
   // https://www.erlang.org/doc/man/inet#type-posix
   Closed
   Timeout
@@ -128,7 +125,7 @@ pub fn set_port(opts: Options, port: Int) -> Options {
 pub fn start_link(opts: Options) -> Result(Pid, Dynamic)
 
 @external(erlang, "emqtt_ffi", "connect")
-pub fn connect(client: Pid) -> Result(Nil, ConnectError)
+pub fn connect(client: Pid) -> Result(Nil, Error)
 
 @external(erlang, "emqtt_ffi", "disconnect")
 pub fn disconnect(client: Pid) -> Result(Dynamic, Dynamic)
