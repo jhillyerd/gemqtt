@@ -152,29 +152,6 @@ pub fn unsubscribe(
   topics: List(String),
 ) -> Result(Dynamic, Dynamic)
 
-// TODO: Publish options!
-// TODO: Topic String|Charlist|Binary type?
-pub fn publish(
-  client: Pid,
-  topic: String,
-  payload: BitArray,
-  properties: Properties,
-  pub_opts: List(PublishOption),
-) -> Result(option.Option(Int), Error) {
-  let Properties(props) = properties
-
-  publish_(client, topic, props, payload, pub_opts)
-}
-
-@external(erlang, "emqtt_ffi", "publish")
-fn publish_(
-  client: Pid,
-  topic: String,
-  props: Dict(String, String),
-  payload: BitArray,
-  opts: List(PublishOption),
-) -> Result(option.Option(Int), Error)
-
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)
 
