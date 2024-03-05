@@ -5,6 +5,7 @@ import gleam/bit_array
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/result
+import gleam/string
 import gleeunit
 import gleeunit/should
 
@@ -125,12 +126,13 @@ pub fn roundtrip_test() {
     |> publisher.publish(msg_content)
 
   // Attempt to receive that message.
-  let assert Ok(Ok(got_msg)) =
+  let assert Ok(got_msg) =
     process.new_selector()
-    |> subscriber.selecting(Ok)
-    |> process.selecting_anything(Error)
+    |> subscriber.selecting_mqtt_messages(Ok)
+    |> process.selecting_anything(unexpected_message)
     |> process.select(within: recv_timeout_millis)
     |> result.replace_error("timeout waiting for message")
+    |> result.flatten
 
   got_msg.topic
   |> should.equal(topic)
@@ -143,4 +145,8 @@ pub fn roundtrip_test() {
 
   let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
+}
+
+fn unexpected_message(msg) {
+  Error("unexpected message: " <> string.inspect(msg))
 }

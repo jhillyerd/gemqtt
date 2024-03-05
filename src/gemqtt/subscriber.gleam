@@ -36,20 +36,20 @@ type PublishFieldName {
 /// controls, rather than any specific one. If you wish to only handle
 /// messages from one client then use one process per client.
 ///
-pub fn selecting(
+pub fn selecting_mqtt_messages(
   selector: process.Selector(t),
   mapper: fn(Message) -> t,
 ) -> process.Selector(t) {
   let publish = atom.create_from_string("publish")
 
   selector
-  |> process.selecting_record2(publish, unsafe_coerce_message(mapper))
+  |> process.selecting_record2(publish, map_dynamic_message(mapper))
 }
 
-/// Decodes a message received by emqtt.  Prefer fn `selecting` over using
-/// this directly.
+/// Decodes a message received by emqtt. Prefer fn `selecting_mqtt_messages`
+/// over using this directly.
 ///
-pub fn from_dynamic(
+pub fn message_from_dynamic(
   published: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
   use client <- result.try(field(ClientPid, decode_client)(published))
@@ -71,9 +71,10 @@ pub fn from_dynamic(
   ))
 }
 
-fn unsafe_coerce_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
+// Calls mapper fn after decoding `Message`, or crashes.
+fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
   fn(published) -> t {
-    let assert Ok(message) = from_dynamic(published)
+    let assert Ok(message) = message_from_dynamic(published)
     mapper(message)
   }
 }
