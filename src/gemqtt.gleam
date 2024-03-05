@@ -2,7 +2,6 @@ import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
-import gleam/option
 
 /// Errors that can occur when working with MQTT connections.
 ///

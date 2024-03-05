@@ -1,13 +1,12 @@
 import gemqtt
 import gemqtt/publisher
+import gemqtt/subscriber
 import gleam/bit_array
-import gleam/dict
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/result
 import gleeunit
 import gleeunit/should
-import message
 
 const mqtt_server_port = 41_883
 
@@ -122,7 +121,7 @@ pub fn roundtrip_test() {
   // Attempt to receive that message.
   let assert Ok(Ok(got_msg)) =
     process.new_selector()
-    |> message.selecting(Ok)
+    |> subscriber.selecting(Ok)
     |> process.selecting_anything(Error)
     |> process.select(within: recv_timeout_millis)
     |> result.replace_error("timeout waiting for message")
