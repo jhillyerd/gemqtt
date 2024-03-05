@@ -1,4 +1,4 @@
-import gemqtt.{type Properties, type Client, Properties}
+import gemqtt.{type Client, type Properties, Properties}
 import gleam/dict.{type Dict}
 import gleam/option
 

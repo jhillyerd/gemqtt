@@ -144,10 +144,10 @@ pub fn pid_of(client: Client) -> process.Pid {
   pid
 }
 
+// TODO: Fix dynamic error
 /// Configure a client process and link it to ours.  Does not attempt to
 /// connect to the MQTT server.
 ///
-// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "start_link")
 pub fn start_link(opts: Options) -> Result(Client, Dynamic)
 
