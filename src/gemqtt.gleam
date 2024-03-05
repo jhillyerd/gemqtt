@@ -48,15 +48,13 @@ pub type Properties {
   Properties(Dict(String, String))
 }
 
+/// MQTT Quality of Service level, controlling how many times a message
+/// may be delivered.
+///
 pub type Qos {
   AtMostOnce
   AtLeastOnce
   ExactlyOnce
-}
-
-pub type PublishOption {
-  Retain(Bool)
-  Qos(Qos)
 }
 
 type EmqttOptionName {
@@ -132,22 +130,45 @@ pub fn set_port(opts: Options, port: Int) -> Options {
   set_option(opts, Port, port)
 }
 
+/// Client holds the process running the MQTT connection, and is required to
+/// publish and subsribe to messages.
+///
+pub opaque type Client {
+  Client(process.Pid)
+}
+
+/// Returns the Erlang Pid of the provided Client.
+///
+pub fn pid_of(client: Client) -> process.Pid {
+  let Client(pid) = client
+  pid
+}
+
+/// Configure a client process and link it to ours.  Does not attempt to
+/// connect to the MQTT server.
+///
+// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "start_link")
-pub fn start_link(opts: Options) -> Result(Pid, Dynamic)
+pub fn start_link(opts: Options) -> Result(Client, Dynamic)
 
+/// Connect to the configured MQTT server.
+///
 @external(erlang, "emqtt_ffi", "connect")
-pub fn connect(client: Pid) -> Result(Nil, Error)
+pub fn connect(client: Client) -> Result(Nil, Error)
 
+// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "disconnect")
-pub fn disconnect(client: Pid) -> Result(Dynamic, Dynamic)
+pub fn disconnect(client: Client) -> Result(Dynamic, Dynamic)
 
 // TODO: Subscription options!
+// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "subscribe")
-pub fn subscribe(client: Pid, topic: String) -> Result(Dynamic, Dynamic)
+pub fn subscribe(client: Client, topic: String) -> Result(Dynamic, Dynamic)
 
+// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "unsubscribe")
 pub fn unsubscribe(
-  client: Pid,
+  client: Client,
   topics: List(String),
 ) -> Result(Dynamic, Dynamic)
 

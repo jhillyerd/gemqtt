@@ -1,12 +1,11 @@
-import gemqtt.{type Properties, Properties}
+import gemqtt.{type Properties, type Client, Properties}
 import gleam/dict.{type Dict}
-import gleam/erlang/process.{type Pid}
 import gleam/option
 
 // TODO: Topic String|Charlist|Binary type?
 pub type Publisher {
   Publisher(
-    client: Pid,
+    client: Client,
     topic: String,
     options: List(PublishOption),
     properties: Properties,
@@ -18,7 +17,7 @@ pub type PublishOption {
   Qos(gemqtt.Qos)
 }
 
-pub fn new(client: Pid, topic: String) -> Publisher {
+pub fn new(client: Client, topic: String) -> Publisher {
   Publisher(
     client: client,
     topic: topic,
@@ -43,7 +42,7 @@ pub fn publish(
 
 @external(erlang, "emqtt_ffi", "publish")
 fn publish_(
-  client: Pid,
+  client: Client,
   topic: String,
   props: Dict(String, String),
   payload: BitArray,

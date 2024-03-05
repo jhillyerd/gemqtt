@@ -1,3 +1,4 @@
+import gemqtt.{type Client}
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
@@ -8,7 +9,7 @@ import gleam/result
 
 pub type Message {
   Message(
-    client: process.Pid,
+    client: Client,
     duplicate: Bool,
     packet_id: Option(Int),
     payload: BitArray,
@@ -51,7 +52,7 @@ pub fn selecting(
 pub fn from_dynamic(
   published: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
-  use client <- result.try(field(ClientPid, decode_pid)(published))
+  use client <- result.try(field(ClientPid, decode_client)(published))
   use duplicate <- result.try(field(Dup, bool)(published))
   use packet_id <- result.try(optional_field(PacketId, int)(published))
   use payload <- result.try(field(Payload, bit_array)(published))
@@ -77,5 +78,5 @@ fn unsafe_coerce_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
   }
 }
 
-@external(erlang, "emqtt_ffi", "decode_pid")
-fn decode_pid(data: Dynamic) -> Result(process.Pid, List(dynamic.DecodeError))
+@external(erlang, "emqtt_ffi", "decode_client")
+fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))

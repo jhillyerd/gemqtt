@@ -39,8 +39,10 @@ pub fn connect_localhost_test() {
     |> process.selecting_trapped_exits(identity)
     |> process.select_forever()
 
-  pid
-  |> should.equal(client)
+  // Verify exit message was from the process under test.
+  client
+  |> gemqtt.pid_of
+  |> should.equal(pid)
 
   process.trap_exits(False)
 }
@@ -66,8 +68,10 @@ pub fn connect_invalid_host_test() {
   reason
   |> should.equal("Shutdown(Nxdomain)")
 
-  pid
-  |> should.equal(client)
+  // Verify exit message was from the process under test.
+  client
+  |> gemqtt.pid_of
+  |> should.equal(pid)
 
   process.trap_exits(False)
 }
@@ -93,8 +97,10 @@ pub fn connect_invalid_port_test() {
   reason
   |> should.equal("Shutdown(Econnrefused)")
 
-  pid
-  |> should.equal(client)
+  // Verify exit message was from the process under test.
+  client
+  |> gemqtt.pid_of
+  |> should.equal(pid)
 
   process.trap_exits(False)
 }
@@ -131,6 +137,9 @@ pub fn roundtrip_test() {
 
   got_msg.payload
   |> should.equal(msg_content)
+
+  got_msg.client
+  |> should.equal(client)
 
   let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
