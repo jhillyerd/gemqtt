@@ -1,5 +1,7 @@
 import gemqtt.{type Client, type Properties, Properties}
 import gleam/dict.{type Dict}
+import gleam/dynamic.{type Dynamic}
+import gleam/erlang/atom.{type Atom}
 import gleam/option
 
 // TODO: Topic String|Charlist|Binary type?
@@ -44,7 +46,7 @@ pub fn publish(
 fn publish_(
   client: Client,
   topic: String,
-  props: Dict(String, String),
+  props: Dict(Atom, Dynamic),
   payload: BitArray,
   opts: List(PublishOption),
 ) -> Result(option.Option(Int), gemqtt.Error)

@@ -42,11 +42,11 @@ pub type Error {
 }
 
 pub opaque type Options {
-  Options(Dict(Atom, Dynamic))
+  Options(options: Dict(Atom, Dynamic), properties: Properties)
 }
 
 pub type Properties {
-  Properties(Dict(String, String))
+  Properties(Dict(Atom, Dynamic))
 }
 
 /// MQTT Quality of Service level, controlling how many times a message
@@ -88,7 +88,7 @@ pub fn new(host: String) -> Options {
     dict.new()
     |> dict.insert(atom.create_from_string("host"), host_value)
 
-  Options(opts)
+  Options(options: opts, properties: Properties(dict.new()))
 }
 
 pub fn set_auth(opts: Options, username: String, password: String) -> Options {
@@ -121,6 +121,42 @@ pub fn set_port(opts: Options, port: Int) -> Options {
   set_option(opts, atom.create_from_string("port"), port)
 }
 
+/// Sets an MQTT CONNECT packet property.  Please note that properties are
+/// validated when `start_link` is called; if _emqtt_ detects errors it will
+/// cause your process to fail rather than return an Error.
+///
+/// Available connect properties:
+///
+/// - `Session-Expiry-Interval`: Four byte integer
+/// - `Receive-Maximum`: Two byte integer
+/// - `Maximum-Packet-Size`: Four byte integer
+/// - `Topic-Alias-Maximum`: Two byte integer
+/// - `Request-Response-Information`: Byte
+/// - `Request-Problem-Information`: Byte
+/// - `User-Property`: UTF-8 string pair
+/// - `Authentication-Method`: UTF-8 encoded string
+/// - `Authentication-Data`: Binary data
+///
+/// Example usage:
+///
+/// ```
+/// gemqtt.new("localhost")
+/// |> gemqtt.set_property("Maximum-Packet-Size", 300)
+/// |> gemqtt.set_property("User-Property", #("prop-name", "prop-value"))
+/// ```
+///
+pub fn set_property(opts: Options, name: String, value: t) -> Options {
+  let Options(options: _, properties: Properties(props)) = opts
+  Options(
+    ..opts,
+    properties: Properties(dict.insert(
+      props,
+      atom.create_from_string(name),
+      dynamic.from(value),
+    )),
+  )
+}
+
 /// Client holds the process running the MQTT connection, and is required to
 /// publish and subsribe to messages.
 ///
@@ -139,8 +175,19 @@ pub fn pid_of(client: Client) -> process.Pid {
 /// Configure a client process and link it to ours.  Does not attempt to
 /// connect to the MQTT server.
 ///
+pub fn start_link(opts: Options) -> Result(Client, Dynamic) {
+  let Options(options: options, properties: Properties(properties)) = opts
+  let options =
+    dict.insert(
+      options,
+      atom.create_from_string("properties"),
+      dynamic.from(properties),
+    )
+  start_link_(options)
+}
+
 @external(erlang, "emqtt_ffi", "start_link")
-pub fn start_link(opts: Options) -> Result(Client, Dynamic)
+fn start_link_(opts: Dict(Atom, Dynamic)) -> Result(Client, Dynamic)
 
 /// Connect to the configured MQTT server.
 ///
@@ -167,6 +214,5 @@ pub fn unsubscribe(
 pub fn stop(client: Pid) -> Result(Nil, Nil)
 
 fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
-  let Options(options) = opts
-  Options(dict.insert(options, name, dynamic.from(value)))
+  Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
 }

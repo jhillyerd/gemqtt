@@ -6,8 +6,7 @@
 ]).
 
 start_link(Options) ->
-  { options, OptMap } = Options,
-  normalize(emqtt:start_link(OptMap)).
+  normalize(emqtt:start_link(Options)).
 
 connect(Client) ->
   { client, ConnPid } = Client,
