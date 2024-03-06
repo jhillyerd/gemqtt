@@ -6,7 +6,6 @@
 ]).
 
 start_link(Options) ->
-  % erlang:display(Options),
   normalize(emqtt:start_link(Options)).
 
 connect(Client) ->

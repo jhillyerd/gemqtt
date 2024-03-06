@@ -25,8 +25,6 @@ pub fn connect_localhost_test() {
 
   let assert Ok(client) =
     gemqtt.new("localhost")
-    |> gemqtt.set_property("Maximum-Packet-Size", 2048)
-    |> gemqtt.set_property("User-Property", #("prop-name", "prop-value"))
     |> gemqtt.set_port(mqtt_server_port)
     |> gemqtt.set_client_id("gemqtt_connect_test")
     |> gemqtt.set_connect_timeout(connect_timeout_seconds)
@@ -108,6 +106,25 @@ pub fn connect_invalid_port_test() {
   process.trap_exits(False)
 }
 
+pub fn connect_properties_test() {
+  process.trap_exits(True)
+  process.flush_messages()
+
+  let assert Ok(client) =
+    gemqtt.new("localhost")
+    |> gemqtt.set_property("Maximum-Packet-Size", 2048)
+    |> gemqtt.set_property("User-Property", #("prop-name", "prop-value"))
+    |> gemqtt.set_port(mqtt_server_port)
+    |> gemqtt.set_client_id("gemqtt_properties_test")
+    |> gemqtt.start_link
+
+  let assert Ok(Nil) = gemqtt.connect(client)
+  let assert Ok(_) = gemqtt.disconnect(client)
+  should_normal_exit(client)
+
+  process.trap_exits(False)
+}
+
 pub fn roundtrip_test() {
   let topic = "gemqtt/test/roundtrip"
   let msg_content = bit_array.from_string("roundtrip content")
@@ -149,6 +166,21 @@ pub fn roundtrip_test() {
   let assert Ok(_) = gemqtt.disconnect(client)
 }
 
+// Verifies that the provided Client process exited normally.
+// `process.trap_exits` must be True for this to succeed.
+fn should_normal_exit(client: gemqtt.Client) -> Nil {
+  let assert process.ExitMessage(pid: pid, reason: process.Normal) =
+    process.new_selector()
+    |> process.selecting_trapped_exits(identity)
+    |> process.select_forever()
+
+  // Verify exit message was from the process under test.
+  client
+  |> gemqtt.pid_of
+  |> should.equal(pid)
+}
+
+// Maps an unexpected process message to `Result(t, String)`.
 fn unexpected_message(msg) {
   Error("unexpected message: " <> string.inspect(msg))
 }
