@@ -25,6 +25,8 @@ pub fn connect_localhost_test() {
 
   let assert Ok(client) =
     gemqtt.new("localhost")
+    |> gemqtt.set_property("Maximum-Packet-Size", 2048)
+    |> gemqtt.set_property("User-Property", #("prop-name", "prop-value"))
     |> gemqtt.set_port(mqtt_server_port)
     |> gemqtt.set_client_id("gemqtt_connect_test")
     |> gemqtt.set_connect_timeout(connect_timeout_seconds)
