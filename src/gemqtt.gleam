@@ -1,5 +1,6 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
+import gleam/erlang/atom.{type Atom}
 import gleam/erlang/charlist
 import gleam/erlang/process.{type Pid}
 
@@ -41,7 +42,7 @@ pub type Error {
 }
 
 pub opaque type Options {
-  Options(Dict(EmqttOptionName, Dynamic))
+  Options(Dict(Atom, Dynamic))
 }
 
 pub type Properties {
@@ -57,35 +58,25 @@ pub type Qos {
   ExactlyOnce
 }
 
-type EmqttOptionName {
-  // Name
-  Owner
-  Host
-  Port
-  // TcpOpts
-  // Ssl
-  // SslOpts
-  // WsPath
-  ConnectTimeout
-  // BridgeMode
-  Clientid
-  CleanStart
-  Username
-  Password
-  // ProtoVer
-  // Keepalive
-  // MaxInflight
-  // RetryInterval
-  // WillTopic
-  // WillPayload
-  // WillRetain
-  // WillQos
-  // WillProps
-  AutoAck
-  // AckTimeout
-  // ForcePing
-  // Properties
-}
+// TODO: Missing options
+// Name
+// TcpOpts
+// Ssl
+// SslOpts
+// WsPath
+// BridgeMode
+// ProtoVer
+// Keepalive
+// MaxInflight
+// RetryInterval
+// WillTopic
+// WillPayload
+// WillRetain
+// WillQos
+// WillProps
+// AckTimeout
+// ForcePing
+// Properties
 
 pub fn new(host: String) -> Options {
   let host_value =
@@ -95,39 +86,39 @@ pub fn new(host: String) -> Options {
 
   let opts =
     dict.new()
-    |> dict.insert(Host, host_value)
+    |> dict.insert(atom.create_from_string("host"), host_value)
 
   Options(opts)
 }
 
 pub fn set_auth(opts: Options, username: String, password: String) -> Options {
   opts
-  |> set_option(Username, username)
-  |> set_option(Password, password)
+  |> set_option(atom.create_from_string("username"), username)
+  |> set_option(atom.create_from_string("password"), password)
 }
 
 pub fn set_auto_ack(opts: Options, ack: Bool) -> Options {
-  set_option(opts, AutoAck, ack)
+  set_option(opts, atom.create_from_string("auto_ack"), ack)
 }
 
 pub fn set_clean_start(opts: Options, clean: Bool) -> Options {
-  set_option(opts, CleanStart, clean)
+  set_option(opts, atom.create_from_string("clean_start"), clean)
 }
 
 pub fn set_client_id(opts: Options, id: String) -> Options {
-  set_option(opts, Clientid, id)
+  set_option(opts, atom.create_from_string("clientid"), id)
 }
 
 pub fn set_connect_timeout(opts: Options, seconds timeout: Int) -> Options {
-  set_option(opts, ConnectTimeout, timeout)
+  set_option(opts, atom.create_from_string("connect_timeout"), timeout)
 }
 
 pub fn set_owner(opts: Options, pid: process.Pid) -> Options {
-  set_option(opts, Owner, pid)
+  set_option(opts, atom.create_from_string("owner"), pid)
 }
 
 pub fn set_port(opts: Options, port: Int) -> Options {
-  set_option(opts, Port, port)
+  set_option(opts, atom.create_from_string("port"), port)
 }
 
 /// Client holds the process running the MQTT connection, and is required to
@@ -175,7 +166,7 @@ pub fn unsubscribe(
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Pid) -> Result(Nil, Nil)
 
-fn set_option(opts: Options, name: EmqttOptionName, value: t) -> Options {
+fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
   let Options(options) = opts
   Options(dict.insert(options, name, dynamic.from(value)))
 }
