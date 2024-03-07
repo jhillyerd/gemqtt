@@ -25,7 +25,7 @@ pub fn main() {
   gleeunit.main()
 }
 
-pub fn connect_test() {
+pub fn client_connect_test() {
   process.trap_exits(True)
   process.flush_messages()
 
@@ -61,7 +61,7 @@ pub fn client_server_name_test() {
   let assert Ok(Nil) = gemqtt.stop(client)
 }
 
-pub fn connect_invalid_host_test() {
+pub fn client_connect_invalid_host_test() {
   process.trap_exits(True)
   process.flush_messages()
 
@@ -80,7 +80,7 @@ pub fn connect_invalid_host_test() {
   process.trap_exits(False)
 }
 
-pub fn connect_invalid_port_test() {
+pub fn client_connect_invalid_port_test() {
   process.trap_exits(True)
   process.flush_messages()
 
@@ -99,7 +99,7 @@ pub fn connect_invalid_port_test() {
   process.trap_exits(False)
 }
 
-pub fn connect_properties_test() {
+pub fn client_connect_properties_test() {
   process.trap_exits(True)
   process.flush_messages()
 
@@ -119,7 +119,7 @@ pub fn connect_properties_test() {
   process.trap_exits(False)
 }
 
-pub fn stop_client_test() {
+pub fn client_stop_test() {
   process.trap_exits(True)
   process.flush_messages()
 

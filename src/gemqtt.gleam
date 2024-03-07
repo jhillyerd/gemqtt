@@ -203,9 +203,8 @@ fn start_link_(opts: Dict(Atom, Dynamic)) -> Result(Client, Error)
 @external(erlang, "emqtt_ffi", "connect")
 pub fn connect(client: Client) -> Result(Nil, Error)
 
-// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "disconnect")
-pub fn disconnect(client: Client) -> Result(Dynamic, Dynamic)
+pub fn disconnect(client: Client) -> Result(Nil, Nil)
 
 // TODO: Subscription options!
 // TODO: Fix dynamic error
