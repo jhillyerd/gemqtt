@@ -37,6 +37,30 @@ pub fn connect_test() {
   process.trap_exits(False)
 }
 
+pub fn client_server_name_test() {
+  process.trap_exits(False)
+
+  let assert Ok(client) =
+    gemqtt.new(mqtt_server_host)
+    |> gemqtt.set_port(mqtt_server_port)
+    |> gemqtt.set_connect_timeout(connect_timeout_seconds)
+    |> gemqtt.set_name("gemqtt_dup")
+    |> gemqtt.start_link
+
+  // Start another Client with the same Erlang server name.
+  let assert Error(gemqtt.AlreadyStarted(orig_pid)) =
+    gemqtt.new(mqtt_server_host)
+    |> gemqtt.set_port(mqtt_server_port)
+    |> gemqtt.set_connect_timeout(connect_timeout_seconds)
+    |> gemqtt.set_name("gemqtt_dup")
+    |> gemqtt.start_link
+
+  orig_pid
+  |> should.equal(gemqtt.pid_of(client))
+
+  let assert Ok(Nil) = gemqtt.stop(client)
+}
+
 pub fn connect_invalid_host_test() {
   process.trap_exits(True)
   process.flush_messages()
