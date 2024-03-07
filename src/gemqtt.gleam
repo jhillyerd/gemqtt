@@ -2,11 +2,13 @@ import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom.{type Atom}
 import gleam/erlang/charlist
-import gleam/erlang/process.{type Pid}
+import gleam/erlang/process
 
 /// Errors that can occur when working with MQTT connections.
 ///
 pub type Error {
+  AlreadyStarted(process.Pid)
+
   // https://www.erlang.org/doc/man/inet#type-posix
   Closed
   Timeout
@@ -59,7 +61,6 @@ pub type Qos {
 }
 
 // TODO: Missing options
-// Name
 // TcpOpts
 // Ssl
 // SslOpts
@@ -111,6 +112,15 @@ pub fn set_client_id(opts: Options, id: String) -> Options {
 
 pub fn set_connect_timeout(opts: Options, seconds timeout: Int) -> Options {
   set_option(opts, atom.create_from_string("connect_timeout"), timeout)
+}
+
+/// Sets the Erlang server name for the client process.
+pub fn set_name(opts: Options, name: String) -> Options {
+  set_option(
+    opts,
+    atom.create_from_string("name"),
+    atom.create_from_string(name),
+  )
 }
 
 pub fn set_owner(opts: Options, pid: process.Pid) -> Options {
@@ -171,11 +181,10 @@ pub fn pid_of(client: Client) -> process.Pid {
   pid
 }
 
-// TODO: Fix dynamic error
 /// Configure a client process and link it to ours.  Does not attempt to
 /// connect to the MQTT server.
 ///
-pub fn start_link(opts: Options) -> Result(Client, Dynamic) {
+pub fn start_link(opts: Options) -> Result(Client, Error) {
   let Options(options: options, properties: Properties(properties)) = opts
   let options =
     dict.insert(
@@ -187,7 +196,7 @@ pub fn start_link(opts: Options) -> Result(Client, Dynamic) {
 }
 
 @external(erlang, "emqtt_ffi", "start_link")
-fn start_link_(opts: Dict(Atom, Dynamic)) -> Result(Client, Dynamic)
+fn start_link_(opts: Dict(Atom, Dynamic)) -> Result(Client, Error)
 
 /// Connect to the configured MQTT server.
 ///
