@@ -95,6 +95,17 @@ pub fn connect_properties_test() {
   process.trap_exits(False)
 }
 
+pub fn stop_client_test() {
+  process.trap_exits(True)
+  process.flush_messages()
+
+  let client = new_test_client("stop_client_test")
+  let assert Ok(Nil) = gemqtt.stop(client)
+  should_exit_normally(client)
+
+  process.trap_exits(False)
+}
+
 pub fn roundtrip_test() {
   let topic = "gemqtt/test/roundtrip"
   let msg_payload = bit_array.from_string("roundtrip payload")

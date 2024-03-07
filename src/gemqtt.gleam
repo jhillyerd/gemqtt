@@ -211,7 +211,7 @@ pub fn unsubscribe(
 ) -> Result(Dynamic, Dynamic)
 
 @external(erlang, "emqtt_ffi", "stop")
-pub fn stop(client: Pid) -> Result(Nil, Nil)
+pub fn stop(client: Client) -> Result(Nil, Nil)
 
 fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
   Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
