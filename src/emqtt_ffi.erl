@@ -19,7 +19,10 @@ disconnect(Client) ->
 subscribe(Client, Topic) ->
   { client, ConnPid } = Client,
   SubOpts = [{qos, 1}],
-  normalize(emqtt:subscribe(ConnPid, #{}, [{Topic, SubOpts}])).
+  case emqtt:subscribe(ConnPid, #{}, [{Topic, SubOpts}]) of
+    {ok, undefined, Reasons} -> {ok, {none, Reasons}};
+    Other -> normalize(Other)
+  end.
 
 unsubscribe(Client, Topics) ->
   { client, ConnPid } = Client,
