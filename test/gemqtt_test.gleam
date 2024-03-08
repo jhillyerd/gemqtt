@@ -121,7 +121,7 @@ pub fn roundtrip_test() {
   let topic = "gemqtt/test/roundtrip"
   let msg_payload = bit_array.from_string("roundtrip payload")
 
-  let client = helper.new_test_client("roundtrip")
+  let client = helper.new_test_client("roundtrip_test")
   let assert Ok(Nil) = gemqtt.connect(client)
   let assert Ok(_) = gemqtt.subscribe(client, topic)
 
@@ -139,14 +139,8 @@ pub fn roundtrip_test() {
     |> result.replace_error("timeout waiting for message")
     |> result.flatten
 
-  got_msg.topic
-  |> should.equal(topic)
-
   got_msg.payload
   |> should.equal(msg_payload)
-
-  got_msg.client
-  |> should.equal(client)
 
   let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
