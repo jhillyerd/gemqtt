@@ -28,6 +28,11 @@ pub fn new(client: Client, topic: String) -> Publisher {
   )
 }
 
+pub fn set_qos(publisher: Publisher, qos: gemqtt.Qos) -> Publisher {
+  let opts = [Qos(qos), ..publisher.options]
+  Publisher(..publisher, options: opts)
+}
+
 pub fn publish(
   publisher: Publisher,
   payload: BitArray,

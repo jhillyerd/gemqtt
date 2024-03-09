@@ -14,6 +14,8 @@ pub fn main() {
 }
 
 pub fn valid_topic_test() {
+  process.flush_messages()
+
   let topic = "gemqtt/test/subscribe_valid_topic"
 
   let client = helper.new_test_client("subscribe_valid_topic")
@@ -26,6 +28,8 @@ pub fn valid_topic_test() {
 }
 
 pub fn selector_test() {
+  process.flush_messages()
+
   let topic = "gemqtt/test/subscribe_selector"
   let msg_payload = bit_array.from_string("selector payload")
 

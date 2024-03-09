@@ -1,23 +1,25 @@
 import gemqtt
+import gemqtt/subscriber
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/string
+import gleam/result
 import gleeunit/should
 
-// External test MQTT server host.  Must accept anonymous connections.
+/// External test MQTT server host.  Must accept anonymous connections.
 pub const mqtt_server_host = "localhost"
 
-// External test MQTT server port.
+/// External test MQTT server port.
 pub const mqtt_server_port = 41_883
 
-// Timeout when initially connecting to the MQTT server.
+/// Timeout when initially connecting to the MQTT server.
 pub const connect_timeout_seconds = 2
 
-// Timeout waiting for a message to be received from the MQTT server.
+/// Timeout waiting for a message to be received from the MQTT server.
 pub const recv_timeout_millis = 2000
 
-// Creates and links a Client, configured for the test server.
-// `connect` will still need to be called on the returned Client.
+/// Creates and links a Client, configured for the test server.
+/// `connect` will still need to be called on the returned Client.
 pub fn new_test_client(client_id: String) -> gemqtt.Client {
   let assert Ok(client) =
     gemqtt.new(mqtt_server_host)
@@ -30,8 +32,8 @@ pub fn new_test_client(client_id: String) -> gemqtt.Client {
   client
 }
 
-// Verifies that the provided Client process exited normally, and returns
-// the reason text. `process.trap_exits` must be True for this to succeed.
+/// Verifies that the provided Client process exited normally, and returns
+/// the reason text. `process.trap_exits` must be True for this to succeed.
 pub fn should_exit_abnormally(client: gemqtt.Client) -> String {
   let assert process.ExitMessage(pid: pid, reason: process.Abnormal(reason)) =
     process.new_selector()
@@ -46,8 +48,8 @@ pub fn should_exit_abnormally(client: gemqtt.Client) -> String {
   reason
 }
 
-// Verifies that the provided Client process exited normally.
-// `process.trap_exits` must be True for this to succeed.
+/// Verifies that the provided Client process exited normally.
+/// `process.trap_exits` must be True for this to succeed.
 pub fn should_exit_normally(client: gemqtt.Client) -> Nil {
   let assert process.ExitMessage(pid: pid, reason: process.Normal) =
     process.new_selector()
@@ -60,7 +62,20 @@ pub fn should_exit_normally(client: gemqtt.Client) -> Nil {
   |> should.equal(pid)
 }
 
-// Maps an unexpected process message to `Result(t, String)`.
+/// Select next MQTT message from mailbox, or fail.
+pub fn get_message() -> subscriber.Message {
+  let assert Ok(message) =
+    process.new_selector()
+    |> subscriber.selecting_mqtt_messages(Ok)
+    |> process.selecting_anything(unexpected_message)
+    |> process.select(within: recv_timeout_millis)
+    |> result.replace_error("timeout waiting for message")
+    |> result.flatten
+
+  message
+}
+
+/// Maps an unexpected process message to `Result(t, String)`.
 pub fn unexpected_message(msg) {
   Error("unexpected message: " <> string.inspect(msg))
 }
