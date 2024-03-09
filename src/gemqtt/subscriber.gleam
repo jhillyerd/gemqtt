@@ -1,9 +1,10 @@
-import gemqtt.{type Client}
+import gemqtt.{type Client, type Qos}
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
 import gleam/erlang/atom
 import gleam/erlang/process
+import gleam/int
 import gleam/option.{type Option}
 import gleam/result
 
@@ -13,7 +14,7 @@ pub type Message {
     duplicate: Bool,
     packet_id: Option(Int),
     payload: BitArray,
-    qos: Int,
+    qos: Qos,
     retain: Bool,
     topic: String,
   )
@@ -56,7 +57,7 @@ pub fn message_from_dynamic(
   use duplicate <- result.try(field(Dup, bool)(published))
   use packet_id <- result.try(optional_field(PacketId, int)(published))
   use payload <- result.try(field(Payload, bit_array)(published))
-  use qos <- result.try(field(Qos, int)(published))
+  use qos <- result.try(field(Qos, decode_qos)(published))
   use retain <- result.try(field(Retain, bool)(published))
   use topic <- result.try(field(Topic, string)(published))
 
@@ -81,3 +82,16 @@ fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
 
 @external(erlang, "emqtt_ffi", "decode_client")
 fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))
+
+fn decode_qos(data: Dynamic) -> Result(Qos, dynamic.DecodeErrors) {
+  data
+  |> int
+  |> result.try(fn(qos) {
+    case qos {
+      0 -> Ok(gemqtt.AtMostOnce)
+      1 -> Ok(gemqtt.AtLeastOnce)
+      2 -> Ok(gemqtt.ExactlyOnce)
+      _ -> Error([dynamic.DecodeError("0,1,2", int.to_string(qos), [])])
+    }
+  })
+}
