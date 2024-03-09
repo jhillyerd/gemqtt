@@ -1,5 +1,6 @@
 import gemqtt.{type Client}
 import gemqtt/publisher
+import gemqtt/subscriber
 import gleam/bit_array
 import gleam/erlang/process
 import gleam/option
@@ -88,10 +89,10 @@ fn with_subscription(test_id: String, handler: fn(Client, String) -> Nil) {
   let topic = "gemqtt/test/publisher/" <> test_id
   let client = helper.new_test_client("publish_default_qos")
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) = gemqtt.subscribe(client, topic)
+  let assert Ok(#(option.None, _)) = subscriber.add(client, topic)
 
   handler(client, topic)
 
-  let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
+  let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
 }

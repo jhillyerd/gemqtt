@@ -1,4 +1,4 @@
-import gemqtt.{type Client, type Qos}
+import gemqtt.{type Client, type Properties, type Qos}
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
@@ -71,6 +71,17 @@ pub fn message_from_dynamic(
     topic: topic,
   ))
 }
+
+// TODO: Subscription options!
+@external(erlang, "emqtt_ffi", "subscribe")
+pub fn add(
+  client: Client,
+  topic: String,
+) -> Result(#(Option(Properties), List(Int)), Nil)
+
+// TODO: Fix dynamic error
+@external(erlang, "emqtt_ffi", "unsubscribe")
+pub fn remove(client: Client, topics: List(String)) -> Result(Dynamic, Dynamic)
 
 // Calls mapper fn after decoding `Message`, or crashes.
 fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
