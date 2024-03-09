@@ -21,7 +21,7 @@ pub fn valid_topic_test() {
   let client = helper.new_test_client("subscribe_valid_topic")
   let assert Ok(Nil) = gemqtt.connect(client)
 
-  let assert Ok(#(option.None, reasons)) = gemqtt.subscribe(client, topic)
+  let assert Ok(#(option.None, reasons)) = subscriber.add(client, topic)
 
   reasons
   |> should.equal([1])
@@ -35,7 +35,7 @@ pub fn selector_test() {
 
   let client = helper.new_test_client("subscribe_selector")
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) = gemqtt.subscribe(client, topic)
+  let assert Ok(#(option.None, _)) = subscriber.add(client, topic)
 
   // Publish a test message.
   let assert Ok(_) =
@@ -60,6 +60,6 @@ pub fn selector_test() {
   got_msg.client
   |> should.equal(client)
 
-  let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
+  let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
 }

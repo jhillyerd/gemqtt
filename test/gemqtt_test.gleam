@@ -123,7 +123,7 @@ pub fn roundtrip_test() {
 
   let client = helper.new_test_client("roundtrip_test")
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(_) = gemqtt.subscribe(client, topic)
+  let assert Ok(_) = subscriber.add(client, topic)
 
   // Publish a test message.
   let assert Ok(_) =
@@ -142,6 +142,6 @@ pub fn roundtrip_test() {
   got_msg.payload
   |> should.equal(msg_payload)
 
-  let assert Ok(_) = gemqtt.unsubscribe(client, [topic])
+  let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
 }

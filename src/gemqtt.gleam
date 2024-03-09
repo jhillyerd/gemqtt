@@ -3,7 +3,6 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom.{type Atom}
 import gleam/erlang/charlist
 import gleam/erlang/process
-import gleam/option.{type Option}
 
 /// Errors that can occur when working with MQTT connections.
 ///
@@ -206,20 +205,6 @@ pub fn connect(client: Client) -> Result(Nil, Error)
 
 @external(erlang, "emqtt_ffi", "disconnect")
 pub fn disconnect(client: Client) -> Result(Nil, Nil)
-
-// TODO: Subscription options!
-@external(erlang, "emqtt_ffi", "subscribe")
-pub fn subscribe(
-  client: Client,
-  topic: String,
-) -> Result(#(Option(Properties), List(Int)), Nil)
-
-// TODO: Fix dynamic error
-@external(erlang, "emqtt_ffi", "unsubscribe")
-pub fn unsubscribe(
-  client: Client,
-  topics: List(String),
-) -> Result(Dynamic, Dynamic)
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Client) -> Result(Nil, Nil)
