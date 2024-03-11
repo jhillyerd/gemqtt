@@ -1,4 +1,5 @@
 import gemqtt.{type Client, type Properties}
+import gemqtt/ffi/puback
 import gemqtt/ffi/publish
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
@@ -62,6 +63,53 @@ pub fn message_from_dynamic(
   ))
 }
 
+// Calls mapper fn after decoding `Message`, or crashes.
+fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
+  fn(published) -> t {
+    let assert Ok(message) = message_from_dynamic(published)
+    mapper(message)
+  }
+}
+
+pub type PubAck {
+  PubAck(packet_id: Int, reason_code: Int)
+}
+
+/// Configure a selector to receive pub-acks from MQTT clients.
+///
+/// Note this will receive pub-acks from all MQTT clients that the process
+/// controls, rather than any specific one.
+///
+pub fn selecting_mqtt_pubacks(
+  selector: process.Selector(t),
+  mapper: fn(PubAck) -> t,
+) -> process.Selector(t) {
+  let puback = atom.create_from_string("puback")
+
+  selector
+  |> process.selecting_record2(puback, map_dynamic_puback(mapper))
+}
+
+/// Decodes a pub-ack received by emqtt. Prefer fn `selecting_mqtt_pubacks`
+/// over using this directly.
+///
+pub fn puback_from_dynamic(
+  input: Dynamic,
+) -> Result(PubAck, List(dynamic.DecodeError)) {
+  use packet_id <- try(field(puback.PacketId, int)(input))
+  use reason_code <- try(field(puback.ReasonCode, int)(input))
+
+  Ok(PubAck(packet_id: packet_id, reason_code: reason_code))
+}
+
+// Calls mapper fn after decoding `Message`, or crashes.
+fn map_dynamic_puback(mapper: fn(PubAck) -> t) -> fn(Dynamic) -> t {
+  fn(input) -> t {
+    let assert Ok(puback) = puback_from_dynamic(input)
+    mapper(puback)
+  }
+}
+
 pub type SubscribeOption {
   // No Local
   Nl(Bool)
@@ -84,14 +132,6 @@ pub fn add(
 // TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "unsubscribe")
 pub fn remove(client: Client, topics: List(String)) -> Result(Dynamic, Dynamic)
-
-// Calls mapper fn after decoding `Message`, or crashes.
-fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
-  fn(published) -> t {
-    let assert Ok(message) = message_from_dynamic(published)
-    mapper(message)
-  }
-}
 
 @external(erlang, "emqtt_ffi", "decode_client")
 fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))

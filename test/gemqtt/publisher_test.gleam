@@ -70,12 +70,10 @@ pub fn exactly_qos_test() {
     got_msg.client
     |> should.equal(client)
 
-    // TODO: Implement subscription QoS so this test can be corrected.
-
     // Verifies the default message QoS value, ensuring other QoS tests
     // actually change the value.
     got_msg.qos
-    |> should.equal(gemqtt.AtLeastOnce)
+    |> should.equal(gemqtt.ExactlyOnce)
   })
 }
 
@@ -90,7 +88,7 @@ fn with_subscription(test_id: String, handler: fn(Client, String) -> Nil) {
   let client = helper.new_test_client("publish_default_qos")
   let assert Ok(Nil) = gemqtt.connect(client)
   let assert Ok(#(option.None, _)) =
-    subscriber.add(client, opts: [subscriber.Qos(gemqtt.AtLeastOnce)], topics: [
+    subscriber.add(client, opts: [subscriber.Qos(gemqtt.ExactlyOnce)], topics: [
       topic,
     ])
 

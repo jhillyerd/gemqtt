@@ -1,5 +1,6 @@
 import gemqtt
 import gemqtt/subscriber
+import gleam/dynamic.{type Dynamic}
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/string
@@ -62,17 +63,30 @@ pub fn should_exit_normally(client: gemqtt.Client) -> Nil {
   |> should.equal(pid)
 }
 
+type MqttMsg {
+  Message(subscriber.Message)
+  PubAck(subscriber.PubAck)
+  Other(Dynamic)
+}
+
 /// Select next MQTT message from mailbox, or fail.
 pub fn get_message() -> subscriber.Message {
-  let assert Ok(message) =
+  let assert Ok(msg) =
     process.new_selector()
-    |> subscriber.selecting_mqtt_messages(Ok)
-    |> process.selecting_anything(unexpected_message)
+    |> subscriber.selecting_mqtt_messages(Message)
+    |> subscriber.selecting_mqtt_pubacks(PubAck)
+    |> process.selecting_anything(Other)
     |> process.select(within: recv_timeout_millis)
     |> result.replace_error("timeout waiting for message")
-    |> result.flatten
 
-  message
+  case msg {
+    Message(message) -> message
+    PubAck(_) -> get_message()
+    Other(msg) -> {
+      Error(#("unexpected message", msg))
+      |> should.be_ok()
+    }
+  }
 }
 
 /// Maps an unexpected process message to `Result(t, String)`.
