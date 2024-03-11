@@ -42,15 +42,15 @@ pub fn selecting_mqtt_messages(
 /// over using this directly.
 ///
 pub fn message_from_dynamic(
-  published: Dynamic,
+  input: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
-  use client <- try(field(publish.ClientPid, decode_client)(published))
-  use duplicate <- try(field(publish.Dup, bool)(published))
-  use packet_id <- try(optional_field(publish.PacketId, int)(published))
-  use payload <- try(field(publish.Payload, bit_array)(published))
-  use qos <- try(field(publish.Qos, decode_qos)(published))
-  use retain <- try(field(publish.Retain, bool)(published))
-  use topic <- try(field(publish.Topic, string)(published))
+  use client <- try(field(publish.ClientPid, decode_client)(input))
+  use duplicate <- try(field(publish.Dup, bool)(input))
+  use packet_id <- try(optional_field(publish.PacketId, int)(input))
+  use payload <- try(field(publish.Payload, bit_array)(input))
+  use qos <- try(field(publish.Qos, decode_qos)(input))
+  use retain <- try(field(publish.Retain, bool)(input))
+  use topic <- try(field(publish.Topic, string)(input))
 
   Ok(Message(
     client: client,
@@ -65,8 +65,8 @@ pub fn message_from_dynamic(
 
 // Calls mapper fn after decoding `Message`, or crashes.
 fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
-  fn(published) -> t {
-    let assert Ok(message) = message_from_dynamic(published)
+  fn(input) -> t {
+    let assert Ok(message) = message_from_dynamic(input)
     mapper(message)
   }
 }
