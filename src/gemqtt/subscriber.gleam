@@ -7,7 +7,7 @@ import gleam/erlang/atom
 import gleam/erlang/process
 import gleam/int
 import gleam/option.{type Option}
-import gleam/result
+import gleam/result.{try}
 
 pub type Message {
   Message(
@@ -43,13 +43,13 @@ pub fn selecting_mqtt_messages(
 pub fn message_from_dynamic(
   published: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
-  use client <- result.try(field(publish.ClientPid, decode_client)(published))
-  use duplicate <- result.try(field(publish.Dup, bool)(published))
-  use packet_id <- result.try(optional_field(publish.PacketId, int)(published))
-  use payload <- result.try(field(publish.Payload, bit_array)(published))
-  use qos <- result.try(field(publish.Qos, decode_qos)(published))
-  use retain <- result.try(field(publish.Retain, bool)(published))
-  use topic <- result.try(field(publish.Topic, string)(published))
+  use client <- try(field(publish.ClientPid, decode_client)(published))
+  use duplicate <- try(field(publish.Dup, bool)(published))
+  use packet_id <- try(optional_field(publish.PacketId, int)(published))
+  use payload <- try(field(publish.Payload, bit_array)(published))
+  use qos <- try(field(publish.Qos, decode_qos)(published))
+  use retain <- try(field(publish.Retain, bool)(published))
+  use topic <- try(field(publish.Topic, string)(published))
 
   Ok(Message(
     client: client,
