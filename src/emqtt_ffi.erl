@@ -2,7 +2,7 @@
 
 -export([
   connect/1, decode_client/1, disconnect/1, publish/5, start_link/1, stop/1,
-  subscribe/2, unsubscribe/2
+  subscribe/3, unsubscribe/2
 ]).
 
 start_link(Options) ->
@@ -16,10 +16,11 @@ disconnect(Client) ->
   { client, ConnPid } = Client,
   normalize(emqtt:disconnect(ConnPid)).
 
-subscribe(Client, Topic) ->
+subscribe(Client, SubOpts, Topics) ->
   { client, ConnPid } = Client,
-  SubOpts = [{qos, 1}],
-  case emqtt:subscribe(ConnPid, #{}, [{Topic, SubOpts}]) of
+  % Pair each topic with the provided SubOpts.
+  TopicPairs = lists:map(fun(T) -> {T, SubOpts} end, Topics),
+  case emqtt:subscribe(ConnPid, #{}, TopicPairs) of
     {ok, undefined, Reasons} -> {ok, {none, Reasons}};
     Other -> normalize(Other)
   end.

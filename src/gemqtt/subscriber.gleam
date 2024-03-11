@@ -1,4 +1,5 @@
-import gemqtt.{type Client, type Properties, type Qos}
+import gemqtt.{type Client, type Properties}
+import gemqtt/ffi/publish
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
@@ -14,21 +15,10 @@ pub type Message {
     duplicate: Bool,
     packet_id: Option(Int),
     payload: BitArray,
-    qos: Qos,
+    qos: gemqtt.Qos,
     retain: Bool,
     topic: String,
   )
-}
-
-type PublishFieldName {
-  ClientPid
-  Dup
-  PacketId
-  Payload
-  // Properties
-  Qos
-  Retain
-  Topic
 }
 
 /// Configure a selector to receive messages from MQTT clients.
@@ -53,13 +43,13 @@ pub fn selecting_mqtt_messages(
 pub fn message_from_dynamic(
   published: Dynamic,
 ) -> Result(Message, List(dynamic.DecodeError)) {
-  use client <- result.try(field(ClientPid, decode_client)(published))
-  use duplicate <- result.try(field(Dup, bool)(published))
-  use packet_id <- result.try(optional_field(PacketId, int)(published))
-  use payload <- result.try(field(Payload, bit_array)(published))
-  use qos <- result.try(field(Qos, decode_qos)(published))
-  use retain <- result.try(field(Retain, bool)(published))
-  use topic <- result.try(field(Topic, string)(published))
+  use client <- result.try(field(publish.ClientPid, decode_client)(published))
+  use duplicate <- result.try(field(publish.Dup, bool)(published))
+  use packet_id <- result.try(optional_field(publish.PacketId, int)(published))
+  use payload <- result.try(field(publish.Payload, bit_array)(published))
+  use qos <- result.try(field(publish.Qos, decode_qos)(published))
+  use retain <- result.try(field(publish.Retain, bool)(published))
+  use topic <- result.try(field(publish.Topic, string)(published))
 
   Ok(Message(
     client: client,
@@ -72,11 +62,23 @@ pub fn message_from_dynamic(
   ))
 }
 
+pub type SubscribeOption {
+  // No Local
+  Nl(Bool)
+  // Quality of Service
+  Qos(gemqtt.Qos)
+  // Retain as Published
+  Rap(Bool)
+  // Retain Handling
+  Rh(Int)
+}
+
 // TODO: Subscription options!
 @external(erlang, "emqtt_ffi", "subscribe")
 pub fn add(
   client: Client,
-  topic: String,
+  opts options: List(SubscribeOption),
+  topics topics: List(String),
 ) -> Result(#(Option(Properties), List(Int)), Nil)
 
 // TODO: Fix dynamic error
@@ -94,7 +96,7 @@ fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
 @external(erlang, "emqtt_ffi", "decode_client")
 fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))
 
-fn decode_qos(data: Dynamic) -> Result(Qos, dynamic.DecodeErrors) {
+fn decode_qos(data: Dynamic) -> Result(gemqtt.Qos, dynamic.DecodeErrors) {
   data
   |> int
   |> result.try(fn(qos) {
