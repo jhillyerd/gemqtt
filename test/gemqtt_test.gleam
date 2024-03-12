@@ -106,6 +106,21 @@ pub fn client_connect_properties_test() {
   process.trap_exits(False)
 }
 
+pub fn client_disconnect_test() {
+  process.trap_exits(True)
+  process.flush_messages()
+
+  let client = helper.new_test_client("disconnect_client_test")
+  let assert Ok(Nil) = gemqtt.connect(client)
+  let assert Ok(Nil) = gemqtt.disconnect(client)
+  helper.should_exit_normally(client)
+
+  // Verify noproc exception is caught and returned.
+  let assert Error(gemqtt.Noproc) = gemqtt.disconnect(client)
+
+  process.trap_exits(False)
+}
+
 pub fn client_stop_test() {
   process.trap_exits(True)
   process.flush_messages()
@@ -114,10 +129,16 @@ pub fn client_stop_test() {
   let assert Ok(Nil) = gemqtt.stop(client)
   helper.should_exit_normally(client)
 
+  // Verify noproc exception is caught and returned.
+  let assert Error(gemqtt.Noproc) = gemqtt.stop(client)
+
   process.trap_exits(False)
 }
 
 pub fn roundtrip_test() {
+  process.trap_exits(False)
+  process.flush_messages()
+
   let topic = "gemqtt/test/roundtrip"
   let msg_payload = bit_array.from_string("roundtrip payload")
 
