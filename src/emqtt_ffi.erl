@@ -14,7 +14,9 @@ connect(Client) ->
 
 disconnect(Client) ->
   { client, ConnPid } = Client,
-  normalize(emqtt:disconnect(ConnPid)).
+  try normalize(emqtt:disconnect(ConnPid))
+  catch exit:{noproc, _} -> {error, noproc}
+  end.
 
 subscribe(Client, SubOpts, Topics) ->
   { client, ConnPid } = Client,
@@ -35,7 +37,9 @@ publish(Client, Topic, Props, Payload, Opts) ->
 
 stop(Client) ->
   { client, ConnPid } = Client,
-  normalize(emqtt:stop(ConnPid)).
+  try normalize(emqtt:stop(ConnPid))
+  catch exit:{noproc, _} -> {error, noproc}
+  end.
 
 % Normalize emqtt return values for Result(t, e).
 normalize(ok) -> {ok, nil};

@@ -8,6 +8,7 @@ import gleam/erlang/process
 ///
 pub type Error {
   AlreadyStarted(process.Pid)
+  Noproc
 
   // https://www.erlang.org/doc/man/inet#type-posix
   Closed
@@ -204,10 +205,10 @@ fn start_link_(opts: Dict(Atom, Dynamic)) -> Result(Client, Error)
 pub fn connect(client: Client) -> Result(Nil, Error)
 
 @external(erlang, "emqtt_ffi", "disconnect")
-pub fn disconnect(client: Client) -> Result(Nil, Nil)
+pub fn disconnect(client: Client) -> Result(Nil, Error)
 
 @external(erlang, "emqtt_ffi", "stop")
-pub fn stop(client: Client) -> Result(Nil, Nil)
+pub fn stop(client: Client) -> Result(Nil, Error)
 
 fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
   Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
