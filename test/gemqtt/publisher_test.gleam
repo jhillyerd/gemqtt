@@ -88,9 +88,10 @@ fn with_subscription(test_id: String, handler: fn(Client, String) -> Nil) {
   let client = helper.new_test_client("publish_default_qos")
   let assert Ok(Nil) = gemqtt.connect(client)
   let assert Ok(#(option.None, _)) =
-    subscriber.add(client, opts: [subscriber.Qos(gemqtt.ExactlyOnce)], topics: [
-      topic,
-    ])
+    client
+    |> subscriber.new
+    |> subscriber.set_qos(gemqtt.ExactlyOnce)
+    |> subscriber.add(topics: [topic])
 
   handler(client, topic)
 
