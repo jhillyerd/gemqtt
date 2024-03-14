@@ -71,55 +71,115 @@ pub fn selector_test() {
   let assert Ok(_) = gemqtt.disconnect(client)
 }
 
+// local_echo is inverted to set "no local" value
 pub fn local_echo_test() {
-  // Test cases, of pattern #(fn(Subscriber), opt_name, want_value)
-  let tcs = [
-    #(subscriber.set_local_echo(_, False), "nl", 1),
-    #(subscriber.set_local_echo(_, True), "nl", 0),
-  ]
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [#("false", False, 1), #("true", True, 0)]
 
-  list.each(tcs, fn(tc) {
-    let #(setter_fn, opt_name, want_value) = tc
+  with_client("local_echo_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
 
-    // Create subscriber and apply test case fn to it.
-    with_client("local_echo_test", fn(client, topic) {
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
       let assert Ok(#(option.None, _)) =
         client
         |> subscriber.new
-        |> setter_fn
+        |> subscriber.set_local_echo(input_value)
         |> subscriber.add(topics: [topic])
 
       // Verify the internal emqtt option has the correct value.
-      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, opt_name)
-      got_value
-      |> should.equal(dynamic.from(want_value))
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "nl")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
     })
   })
 }
 
 pub fn qos_test() {
-  // Test cases, of pattern #(fn(Subscriber), opt_name, want_value)
+  // Test cases, of pattern #(tc_name, input_value, want_value)
   let tcs = [
-    #(subscriber.set_qos(_, gemqtt.AtMostOnce), "qos", 0),
-    #(subscriber.set_qos(_, gemqtt.AtLeastOnce), "qos", 1),
-    #(subscriber.set_qos(_, gemqtt.ExactlyOnce), "qos", 2),
+    #("at_most_once", gemqtt.AtMostOnce, 0),
+    #("at_least_once", gemqtt.AtLeastOnce, 1),
+    #("exactly_once", gemqtt.ExactlyOnce, 2),
   ]
 
-  list.each(tcs, fn(tc) {
-    let #(setter_fn, opt_name, want_value) = tc
+  with_client("qos_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
 
-    // Create subscriber and apply test case fn to it.
-    with_client("qos_test", fn(client, topic) {
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
       let assert Ok(#(option.None, _)) =
         client
         |> subscriber.new
-        |> setter_fn
+        |> subscriber.set_qos(input_value)
         |> subscriber.add(topics: [topic])
 
       // Verify the internal emqtt option has the correct value.
-      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, opt_name)
-      got_value
-      |> should.equal(dynamic.from(want_value))
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "qos")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
+}
+
+pub fn retain_as_published_test() {
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [#("false", False, 0), #("true", True, 1)]
+
+  with_client("retain_as_published_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
+
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_retain_as_published(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "rap")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
+}
+
+pub fn retain_handling_test() {
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [
+    #("always", subscriber.SentAlways, 0),
+    #("on_new", subscriber.SentOnNewSubscription, 1),
+    #("never", subscriber.SentNever, 2),
+  ]
+
+  with_client("retain_handling_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
+
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_retain_handling(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "rh")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
     })
   })
 }
