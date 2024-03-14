@@ -189,7 +189,18 @@ pub fn add(
   sub: Subscriber,
   topics topics: List(String),
 ) -> Result(#(Option(Properties), List(Int)), Nil) {
-  let opts = [Nl(sub.no_local), Qos(sub.qos)]
+  let rh = case sub.retain_handling {
+    SentAlways -> 0
+    SentOnNewSubscription -> 1
+    SentNever -> 2
+  }
+
+  let opts = [
+    Nl(sub.no_local),
+    Qos(sub.qos),
+    Rap(sub.retain_as_published),
+    Rh(rh),
+  ]
 
   add_(sub.client, opts, topics)
 }

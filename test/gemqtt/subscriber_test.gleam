@@ -71,43 +71,130 @@ pub fn selector_test() {
   let assert Ok(_) = gemqtt.disconnect(client)
 }
 
+// local_echo is inverted to set "no local" value
 pub fn local_echo_test() {
-  let topic = "gemqtt/test/local_echo"
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [#("false", False, 1), #("true", True, 0)]
 
-  // Create subscriber with no local echo.
-  let client = helper.new_test_client("no_local_echo")
-  let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) =
-    client
-    |> subscriber.new
-    |> subscriber.set_local_echo(True)
-    |> subscriber.add(topics: [topic])
+  with_client("local_echo_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
 
-  // Verify emqtt's `nl` option has the correct value.
-  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
-  got_nl
-  |> should.equal(dynamic.from(0))
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
 
-  let assert Ok(_) = subscriber.remove(client, [topic])
-  let assert Ok(_) = gemqtt.disconnect(client)
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_local_echo(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "nl")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
 }
 
-pub fn no_local_echo_test() {
-  let topic = "gemqtt/test/no_local_echo"
+pub fn qos_test() {
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [
+    #("at_most_once", gemqtt.AtMostOnce, 0),
+    #("at_least_once", gemqtt.AtLeastOnce, 1),
+    #("exactly_once", gemqtt.ExactlyOnce, 2),
+  ]
 
-  // Create subscriber with no local echo.
-  let client = helper.new_test_client("no_local_echo")
+  with_client("qos_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
+
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_qos(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "qos")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
+}
+
+pub fn retain_as_published_test() {
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [#("false", False, 0), #("true", True, 1)]
+
+  with_client("retain_as_published_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
+
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_retain_as_published(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "rap")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
+}
+
+pub fn retain_handling_test() {
+  // Test cases, of pattern #(tc_name, input_value, want_value)
+  let tcs = [
+    #("always", subscriber.SentAlways, 0),
+    #("on_new", subscriber.SentOnNewSubscription, 1),
+    #("never", subscriber.SentNever, 2),
+  ]
+
+  with_client("retain_handling_test", fn(client, topic) {
+    list.each(tcs, fn(tc) {
+      let #(tc_name, input_value, want_value) = tc
+
+      // Use unique topic for this sub-test.
+      let topic = topic <> "/" <> tc_name
+
+      // Create subscriber and apply test case fn to it.
+      let assert Ok(#(option.None, _)) =
+        client
+        |> subscriber.new
+        |> subscriber.set_retain_handling(input_value)
+        |> subscriber.add(topics: [topic])
+
+      // Verify the internal emqtt option has the correct value.
+      let assert Ok(got_value) = get_emqtt_sub_option(client, topic, "rh")
+      #(tc_name, got_value)
+      |> should.equal(#(tc_name, dynamic.from(want_value)))
+    })
+  })
+}
+
+// Creates and connects a new gemqtt Client, and passes it with a generated
+// topic to the provided function.
+fn with_client(test_id: String, handler: fn(Client, String) -> Nil) {
+  process.trap_exits(False)
+  process.flush_messages()
+
+  let topic = "gemqtt/test/subscriber/" <> test_id
+  let client = helper.new_test_client(test_id)
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) =
-    client
-    |> subscriber.new
-    |> subscriber.set_local_echo(False)
-    |> subscriber.add(topics: [topic])
 
-  // Verify emqtt's `nl` option has the correct value.
-  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
-  got_nl
-  |> should.equal(dynamic.from(1))
+  handler(client, topic)
 
   let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
