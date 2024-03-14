@@ -33,6 +33,11 @@ pub fn set_qos(publisher: Publisher, qos: gemqtt.Qos) -> Publisher {
   Publisher(..publisher, options: opts)
 }
 
+pub fn set_retain(publisher: Publisher, retain: Bool) -> Publisher {
+  let opts = [Retain(retain), ..publisher.options]
+  Publisher(..publisher, options: opts)
+}
+
 pub fn publish(
   publisher: Publisher,
   payload: BitArray,

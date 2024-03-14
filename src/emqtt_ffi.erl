@@ -2,7 +2,7 @@
 
 -export([
   connect/1, decode_client/1, disconnect/1, publish/5, start_link/1, stop/1,
-  subscribe/3, unsubscribe/2
+  subscribe/3, subscriptions/1, unsubscribe/2
 ]).
 
 start_link(Options) ->
@@ -30,6 +30,10 @@ subscribe(Client, SubOpts, Topics) ->
 unsubscribe(Client, Topics) ->
   { client, ConnPid } = Client,
   normalize(emqtt:unsubscribe(ConnPid, #{}, Topics)).
+
+subscriptions(Client) ->
+  { client, ConnPid } = Client,
+  emqtt:subscriptions(ConnPid).
 
 publish(Client, Topic, Props, Payload, Opts) ->
   { client, ConnPid } = Client,

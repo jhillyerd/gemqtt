@@ -110,6 +110,69 @@ fn map_dynamic_puback(mapper: fn(PubAck) -> t) -> fn(Dynamic) -> t {
   }
 }
 
+/// Controls whether retained messages are sent when a subscription is added.
+pub type RetainHandling {
+  /// Retained messages are sent whenever a subscription is established.
+  SentAlways
+
+  /// Retained messages are sent only when establishing a new subscription,
+  /// not a repeated one.
+  SentOnNewSubscription
+
+  /// No retained messages are sent when a subscription is established.
+  SentNever
+}
+
+pub opaque type Subscriber {
+  Subscriber(
+    client: Client,
+    no_local: Bool,
+    qos: gemqtt.Qos,
+    retain_as_published: Bool,
+    retain_handling: RetainHandling,
+  )
+}
+
+/// Creates a new subscriber with default options:
+///
+/// - no_local: False
+/// - qos: AtMostOnce
+/// - retain_as_published: False
+/// - retain_handling: SentAlways
+///
+pub fn new(client: Client) -> Subscriber {
+  Subscriber(
+    client: client,
+    no_local: False,
+    qos: gemqtt.AtMostOnce,
+    retain_as_published: False,
+    retain_handling: SentAlways,
+  )
+}
+
+pub fn set_local_echo(subscriber: Subscriber, value: Bool) -> Subscriber {
+  Subscriber(..subscriber, no_local: !value)
+}
+
+pub fn set_qos(subscriber: Subscriber, value: gemqtt.Qos) -> Subscriber {
+  Subscriber(..subscriber, qos: value)
+}
+
+pub fn set_retain_as_published(
+  subscriber: Subscriber,
+  value: Bool,
+) -> Subscriber {
+  Subscriber(..subscriber, retain_as_published: value)
+}
+
+pub fn set_retain_handling(
+  subscriber: Subscriber,
+  value: RetainHandling,
+) -> Subscriber {
+  Subscriber(..subscriber, retain_handling: value)
+}
+
+// TODO make private
 pub type SubscribeOption {
   // No Local
   Nl(Bool)
@@ -121,9 +184,18 @@ pub type SubscribeOption {
   Rh(Int)
 }
 
-// TODO: Subscription options!
-@external(erlang, "emqtt_ffi", "subscribe")
+// TODO Subscription properties!
 pub fn add(
+  sub: Subscriber,
+  topics topics: List(String),
+) -> Result(#(Option(Properties), List(Int)), Nil) {
+  let opts = [Nl(sub.no_local), Qos(sub.qos)]
+
+  add_(sub.client, opts, topics)
+}
+
+@external(erlang, "emqtt_ffi", "subscribe")
+pub fn add_(
   client: Client,
   opts options: List(SubscribeOption),
   topics topics: List(String),

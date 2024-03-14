@@ -213,3 +213,6 @@ pub fn stop(client: Client) -> Result(Nil, Error)
 fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
   Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
 }
+
+@external(erlang, "emqtt_ffi", "subscriptions")
+pub fn subscriptions(client: Client) -> List(#(String, Dict(Atom, Dynamic)))
