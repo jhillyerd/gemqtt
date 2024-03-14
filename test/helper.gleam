@@ -3,6 +3,7 @@ import gemqtt/subscriber
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/process
 import gleam/function.{identity}
+import gleam/io
 import gleam/string
 import gleam/result
 import gleeunit/should
@@ -18,6 +19,11 @@ pub const connect_timeout_seconds = 2
 
 /// Timeout waiting for a message to be received from the MQTT server.
 pub const recv_timeout_millis = 2000
+
+pub fn debug(term: t) -> t {
+  io.println(string.inspect(term))
+  term
+}
 
 /// Creates and links a Client, configured for the test server.
 /// `connect` will still need to be called on the returned Client.

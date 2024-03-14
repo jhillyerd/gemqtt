@@ -1,16 +1,14 @@
-import gemqtt
+import gemqtt.{type Client}
 import gemqtt/publisher
 import gemqtt/subscriber
 import gleam/bit_array
 import gleam/dict
-import gleam/dynamic
+import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
 import gleam/erlang/process
-import gleam/io
 import gleam/list
 import gleam/option
 import gleam/result
-import gleam/string
 import gleeunit
 import gleeunit/should
 import helper
@@ -85,15 +83,8 @@ pub fn local_echo_test() {
     |> subscriber.set_local_echo(True)
     |> subscriber.add(topics: [topic])
 
-  // Fetch options from emqtt subscription information.
-  let assert Ok(#(_, got_opts)) =
-    list.find(gemqtt.subscriptions(client), fn(sub) {
-      let #(t, _) = sub
-      t == topic
-    })
-
-  // Verify `nl` (no local) is true.
-  let assert Ok(got_nl) = dict.get(got_opts, atom.create_from_string("nl"))
+  // Verify emqtt's `nl` option has the correct value.
+  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
   got_nl
   |> should.equal(dynamic.from(0))
 
@@ -113,18 +104,32 @@ pub fn no_local_echo_test() {
     |> subscriber.set_local_echo(False)
     |> subscriber.add(topics: [topic])
 
-  // Fetch options from emqtt subscription information.
-  let assert Ok(#(_, got_opts)) =
-    list.find(gemqtt.subscriptions(client), fn(sub) {
-      let #(t, _) = sub
-      t == topic
-    })
-
-  // Verify `nl` (no local) is true.
-  let assert Ok(got_nl) = dict.get(got_opts, atom.create_from_string("nl"))
+  // Verify emqtt's `nl` option has the correct value.
+  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
   got_nl
   |> should.equal(dynamic.from(1))
 
   let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
+}
+
+fn get_emqtt_sub_option(
+  client: Client,
+  topic: String,
+  opt_name: String,
+) -> Result(Dynamic, String) {
+  let opt_key = atom.create_from_string(opt_name)
+
+  // Fetch topics & options from emqtt subscription information.
+  client
+  |> gemqtt.subscriptions
+  |> list.key_find(topic)
+  |> result.replace_error("topic `" <> topic <> "` not found in subscriptions")
+  |> result.then(fn(opts) {
+    // Topic was found, get the specified option.
+    dict.get(opts, opt_key)
+    |> result.replace_error(
+      "topic found, but option `" <> opt_name <> "` was not present",
+    )
+  })
 }
