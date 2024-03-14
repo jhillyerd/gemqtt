@@ -85,7 +85,7 @@ fn with_subscription(test_id: String, handler: fn(Client, String) -> Nil) {
   process.flush_messages()
 
   let topic = "gemqtt/test/publisher/" <> test_id
-  let client = helper.new_test_client("publish_default_qos")
+  let client = helper.new_test_client(test_id)
   let assert Ok(Nil) = gemqtt.connect(client)
   let assert Ok(#(option.None, _)) =
     client

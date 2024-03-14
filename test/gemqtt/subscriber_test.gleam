@@ -72,42 +72,46 @@ pub fn selector_test() {
 }
 
 pub fn local_echo_test() {
-  let topic = "gemqtt/test/local_echo"
+  with_client("no_local_echo", fn(client, topic) {
+    let assert Ok(#(option.None, _)) =
+      client
+      |> subscriber.new
+      |> subscriber.set_local_echo(True)
+      |> subscriber.add(topics: [topic])
 
-  // Create subscriber with no local echo.
-  let client = helper.new_test_client("no_local_echo")
-  let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) =
-    client
-    |> subscriber.new
-    |> subscriber.set_local_echo(True)
-    |> subscriber.add(topics: [topic])
-
-  // Verify emqtt's `nl` option has the correct value.
-  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
-  got_nl
-  |> should.equal(dynamic.from(0))
-
-  let assert Ok(_) = subscriber.remove(client, [topic])
-  let assert Ok(_) = gemqtt.disconnect(client)
+    // Verify emqtt's `nl` option has the correct value.
+    let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
+    got_nl
+    |> should.equal(dynamic.from(0))
+  })
 }
 
 pub fn no_local_echo_test() {
-  let topic = "gemqtt/test/no_local_echo"
+  with_client("no_local_echo", fn(client, topic) {
+    let assert Ok(#(option.None, _)) =
+      client
+      |> subscriber.new
+      |> subscriber.set_local_echo(False)
+      |> subscriber.add(topics: [topic])
 
-  // Create subscriber with no local echo.
-  let client = helper.new_test_client("no_local_echo")
+    // Verify emqtt's `nl` option has the correct value.
+    let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
+    got_nl
+    |> should.equal(dynamic.from(1))
+  })
+}
+
+// Creates and connects a new gemqtt Client, and passes it with a generated
+// topic to the provided function.
+fn with_client(test_id: String, handler: fn(Client, String) -> Nil) {
+  process.trap_exits(False)
+  process.flush_messages()
+
+  let topic = "gemqtt/test/subscriber/" <> test_id
+  let client = helper.new_test_client(test_id)
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) =
-    client
-    |> subscriber.new
-    |> subscriber.set_local_echo(False)
-    |> subscriber.add(topics: [topic])
 
-  // Verify emqtt's `nl` option has the correct value.
-  let assert Ok(got_nl) = get_emqtt_sub_option(client, topic, "nl")
-  got_nl
-  |> should.equal(dynamic.from(1))
+  handler(client, topic)
 
   let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
