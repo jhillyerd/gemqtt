@@ -184,6 +184,26 @@ pub fn retain_handling_test() {
   })
 }
 
+pub fn remove_test() {
+  with_client("remove_test", fn(client, topic) {
+    let assert Ok(#(option.None, _)) =
+      client
+      |> subscriber.new
+      |> subscriber.add(topics: [topic])
+    client
+    |> gemqtt.subscriptions
+    |> list.length
+    |> should.equal(1)
+
+    // Verify subscription list is now empty.
+    let assert Ok(_) = subscriber.remove(client, [topic])
+    client
+    |> gemqtt.subscriptions
+    |> list.length
+    |> should.equal(0)
+  })
+}
+
 // Creates and connects a new gemqtt Client, and passes it with a generated
 // topic to the provided function.
 fn with_client(test_id: String, handler: fn(Client, String) -> Nil) {

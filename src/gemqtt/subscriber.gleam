@@ -211,9 +211,8 @@ fn add_(
   topics topics: List(String),
 ) -> Result(#(Option(Properties), List(Int)), Nil)
 
-// TODO: Fix dynamic error
 @external(erlang, "emqtt_ffi", "unsubscribe")
-pub fn remove(client: Client, topics: List(String)) -> Result(Dynamic, Dynamic)
+pub fn remove(client: Client, topics: List(String)) -> Result(Dynamic, Int)
 
 @external(erlang, "emqtt_ffi", "decode_client")
 fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))
