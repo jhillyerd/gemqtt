@@ -4,7 +4,6 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom.{type Atom}
 import gleam/option
 
-// TODO: Topic String|Charlist|Binary type?
 pub type Publisher {
   Publisher(
     client: Client,
