@@ -1,5 +1,6 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
+import gleam/option.{type Option}
 import gleam/erlang/atom.{type Atom}
 import gleam/erlang/charlist
 import gleam/erlang/process
@@ -8,6 +9,7 @@ import gleam/erlang/process
 ///
 pub type Error {
   AlreadyStarted(process.Pid)
+  BadProperty(Option(Atom))
   Noproc
 
   // https://www.erlang.org/doc/man/inet#type-posix

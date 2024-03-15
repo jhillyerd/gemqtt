@@ -6,7 +6,11 @@
 ]).
 
 start_link(Options) ->
-  normalize(emqtt:start_link(Options)).
+  try normalize(emqtt:start_link(Options))
+  catch
+    error:{bad_property, Name} -> {error, {bad_property, {some, Name}}};
+    error:bad_property -> {error, {bad_property, none}}
+  end.
 
 connect(Client) ->
   { client, ConnPid } = Client,
