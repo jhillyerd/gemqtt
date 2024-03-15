@@ -2,7 +2,9 @@ import gemqtt
 import gemqtt/publisher
 import gemqtt/subscriber
 import gleam/bit_array
+import gleam/erlang/atom
 import gleam/erlang/process
+import gleam/option.{None, Some}
 import gleam/result
 import gleeunit
 import gleeunit/should
@@ -104,6 +106,30 @@ pub fn connect_properties_test() {
   helper.should_exit_normally(client)
 
   process.trap_exits(False)
+}
+
+pub fn bad_connect_properties_test() {
+  // Try to start with invalid property name.
+  let assert Error(got_err) =
+    gemqtt.new(helper.mqtt_server_host)
+    |> gemqtt.set_port(helper.mqtt_server_port)
+    |> gemqtt.set_client_id("bad_properties_test")
+    |> gemqtt.set_property("BAD_NAME", 2048)
+    |> gemqtt.start_link
+
+  let assert gemqtt.BadProperty(got_prop) = got_err
+  got_prop
+  |> should.equal(Some(atom.create_from_string("BAD_NAME")))
+
+  // Try to start with invalid property value.
+  let assert Error(got_err) =
+    gemqtt.new(helper.mqtt_server_host)
+    |> gemqtt.set_port(helper.mqtt_server_port)
+    |> gemqtt.set_client_id("bad_properties_test")
+    |> gemqtt.set_property("Maximum-Packet-Size", "smol")
+    |> gemqtt.start_link
+
+  let assert gemqtt.BadProperty(None) = got_err
 }
 
 pub fn disconnect_test() {
