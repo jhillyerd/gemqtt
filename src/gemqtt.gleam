@@ -132,6 +132,10 @@ pub fn set_port(opts: Options, port: Int) -> Options {
   set_option(opts, atom.create_from_string("port"), port)
 }
 
+fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
+  Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
+}
+
 /// Sets an MQTT CONNECT packet property.  Please note that properties are
 /// validated when `start_link` is called; if _emqtt_ detects errors it will
 /// cause your process to fail rather than return an Error.
@@ -209,10 +213,6 @@ pub fn disconnect(client: Client) -> Result(Nil, Error)
 
 @external(erlang, "emqtt_ffi", "stop")
 pub fn stop(client: Client) -> Result(Nil, Error)
-
-fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
-  Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
-}
 
 @external(erlang, "emqtt_ffi", "subscriptions")
 pub fn subscriptions(client: Client) -> List(#(String, Dict(Atom, Dynamic)))
