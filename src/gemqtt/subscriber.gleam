@@ -172,8 +172,7 @@ pub fn set_retain_handling(
   Subscriber(..subscriber, retain_handling: value)
 }
 
-// TODO make private
-pub type SubscribeOption {
+type SubscribeOption {
   // No Local
   Nl(Bool)
   // Quality of Service
@@ -206,7 +205,7 @@ pub fn add(
 }
 
 @external(erlang, "emqtt_ffi", "subscribe")
-pub fn add_(
+fn add_(
   client: Client,
   opts options: List(SubscribeOption),
   topics topics: List(String),
