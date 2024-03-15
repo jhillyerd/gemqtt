@@ -212,7 +212,10 @@ fn add_(
 ) -> Result(#(Option(Properties), List(Int)), Nil)
 
 @external(erlang, "emqtt_ffi", "unsubscribe")
-pub fn remove(client: Client, topics: List(String)) -> Result(Dynamic, Int)
+pub fn remove(
+  client: Client,
+  topics: List(String),
+) -> Result(#(Option(Properties), List(Int)), Nil)
 
 @external(erlang, "emqtt_ffi", "decode_client")
 fn decode_client(data: Dynamic) -> Result(Client, List(dynamic.DecodeError))

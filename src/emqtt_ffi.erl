@@ -27,13 +27,22 @@ subscribe(Client, SubOpts, Topics) ->
   % Pair each topic with the provided SubOpts.
   TopicPairs = lists:map(fun(T) -> {T, SubOpts} end, Topics),
   case emqtt:subscribe(ConnPid, #{}, TopicPairs) of
+    {ok, undefined, undefined} -> {ok, {none, []}};
     {ok, undefined, Reasons} -> {ok, {none, Reasons}};
+    {ok, Properties, undefined} -> {ok, {{some, Properties}, []}};
+    {ok, Properties, Reasons} -> {ok, {{some, Properties}, Reasons}};
     Other -> normalize(Other)
   end.
 
 unsubscribe(Client, Topics) ->
   { client, ConnPid } = Client,
-  normalize(emqtt:unsubscribe(ConnPid, #{}, Topics)).
+  case emqtt:unsubscribe(ConnPid, #{}, Topics) of
+    {ok, undefined, undefined} -> {ok, {none, []}};
+    {ok, undefined, Reasons} -> {ok, {none, Reasons}};
+    {ok, Properties, undefined} -> {ok, {{some, Properties}, []}};
+    {ok, Properties, Reasons} -> {ok, {{some, Properties}, Reasons}};
+    Other -> normalize(Other)
+  end.
 
 subscriptions(Client) ->
   { client, ConnPid } = Client,

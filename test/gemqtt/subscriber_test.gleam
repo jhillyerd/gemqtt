@@ -7,7 +7,7 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
 import gleam/erlang/process
 import gleam/list
-import gleam/option
+import gleam/option.{None}
 import gleam/result
 import gleeunit
 import gleeunit/should
@@ -25,10 +25,22 @@ pub fn valid_topic_test() {
   let client = helper.new_test_client("subscribe_valid_topic")
   let assert Ok(Nil) = gemqtt.connect(client)
 
-  let assert Ok(#(option.None, _reasons)) =
+  let assert Ok(#(props, reasons)) =
     client
     |> subscriber.new
     |> subscriber.add(topics: [topic])
+
+  // Verify subscription list length.
+  client
+  |> gemqtt.subscriptions
+  |> list.length
+  |> should.equal(1)
+
+  // Server dependent.
+  props
+  |> should.equal(None)
+  reasons
+  |> should.equal([0])
 }
 
 pub fn selector_test() {
@@ -39,7 +51,7 @@ pub fn selector_test() {
 
   let client = helper.new_test_client("subscribe_selector")
   let assert Ok(Nil) = gemqtt.connect(client)
-  let assert Ok(#(option.None, _)) =
+  let assert Ok(#(None, _)) =
     client
     |> subscriber.new
     |> subscriber.add(topics: [topic])
@@ -84,7 +96,7 @@ pub fn local_echo_test() {
       let topic = topic <> "/" <> tc_name
 
       // Create subscriber and apply test case fn to it.
-      let assert Ok(#(option.None, _)) =
+      let assert Ok(#(None, _)) =
         client
         |> subscriber.new
         |> subscriber.set_local_echo(input_value)
@@ -114,7 +126,7 @@ pub fn qos_test() {
       let topic = topic <> "/" <> tc_name
 
       // Create subscriber and apply test case fn to it.
-      let assert Ok(#(option.None, _)) =
+      let assert Ok(#(None, _)) =
         client
         |> subscriber.new
         |> subscriber.set_qos(input_value)
@@ -140,7 +152,7 @@ pub fn retain_as_published_test() {
       let topic = topic <> "/" <> tc_name
 
       // Create subscriber and apply test case fn to it.
-      let assert Ok(#(option.None, _)) =
+      let assert Ok(#(None, _)) =
         client
         |> subscriber.new
         |> subscriber.set_retain_as_published(input_value)
@@ -170,7 +182,7 @@ pub fn retain_handling_test() {
       let topic = topic <> "/" <> tc_name
 
       // Create subscriber and apply test case fn to it.
-      let assert Ok(#(option.None, _)) =
+      let assert Ok(#(None, _)) =
         client
         |> subscriber.new
         |> subscriber.set_retain_handling(input_value)
@@ -186,7 +198,7 @@ pub fn retain_handling_test() {
 
 pub fn remove_test() {
   with_client("remove_test", fn(client, topic) {
-    let assert Ok(#(option.None, _)) =
+    let assert Ok(#(None, _)) =
       client
       |> subscriber.new
       |> subscriber.add(topics: [topic])
@@ -196,11 +208,17 @@ pub fn remove_test() {
     |> should.equal(1)
 
     // Verify subscription list is now empty.
-    let assert Ok(_) = subscriber.remove(client, [topic])
+    let assert Ok(#(props, reasons)) = subscriber.remove(client, [topic])
     client
     |> gemqtt.subscriptions
     |> list.length
     |> should.equal(0)
+
+    // Server dependent.
+    props
+    |> should.equal(None)
+    reasons
+    |> should.equal([])
   })
 }
 
