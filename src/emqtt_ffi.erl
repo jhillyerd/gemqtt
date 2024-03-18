@@ -2,7 +2,7 @@
 
 -export([
   connect/1, decode_client/1, disconnect/1, publish/5, start_link/1, stop/1,
-  subscribe/3, subscriptions/1, unsubscribe/2
+  subscribe/4, subscriptions/1, unsubscribe/2
 ]).
 
 start_link(Options) ->
@@ -22,11 +22,11 @@ disconnect(Client) ->
   catch exit:{noproc, _} -> {error, noproc}
   end.
 
-subscribe(Client, SubOpts, Topics) ->
+subscribe(Client, SubOpts, Properties, Topics) ->
   { client, ConnPid } = Client,
   % Pair each topic with the provided SubOpts.
   TopicPairs = lists:map(fun(T) -> {T, SubOpts} end, Topics),
-  case emqtt:subscribe(ConnPid, #{}, TopicPairs) of
+  case emqtt:subscribe(ConnPid, Properties, TopicPairs) of
     {ok, undefined, undefined} -> {ok, {none, []}};
     {ok, undefined, Reasons} -> {ok, {none, Reasons}};
     {ok, Properties, undefined} -> {ok, {{some, Properties}, []}};
