@@ -18,8 +18,6 @@ pub fn main() {
 }
 
 pub fn valid_topic_test() {
-  process.flush_messages()
-
   let topic = "gemqtt/test/subscribe_valid_topic"
 
   let client = helper.new_test_client("subscribe_valid_topic")
@@ -193,6 +191,22 @@ pub fn retain_handling_test() {
       #(tc_name, got_value)
       |> should.equal(#(tc_name, dynamic.from(want_value)))
     })
+  })
+}
+
+pub fn valid_property_test() {
+  // emqtt v1.2 does not validate subscription properties before sending them,
+  // so this test is just confirming it doesn't crash.
+
+  with_client("valid_property_test", fn(client, topic) {
+    let assert Ok(#(None, _)) =
+      client
+      |> subscriber.new
+      |> subscriber.set_property("Subscription-Identifier", 42)
+      |> subscriber.set_property("User-Property", #("prop-name", "prop-value"))
+      |> subscriber.add(topics: [topic])
+
+    Nil
   })
 }
 

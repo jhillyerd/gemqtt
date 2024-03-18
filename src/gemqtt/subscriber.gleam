@@ -1,10 +1,11 @@
 import gemqtt.{type Client, type Properties}
 import gemqtt/ffi/puback
 import gemqtt/ffi/publish
+import gleam/dict.{type Dict}
 import gleam/dynamic.{
   type Dynamic, bit_array, bool, field, int, optional_field, string,
 }
-import gleam/erlang/atom
+import gleam/erlang/atom.{type Atom}
 import gleam/erlang/process
 import gleam/int
 import gleam/option.{type Option}
@@ -130,9 +131,11 @@ pub opaque type Subscriber {
     qos: gemqtt.Qos,
     retain_as_published: Bool,
     retain_handling: RetainHandling,
+    properties: gemqtt.Properties,
   )
 }
 
+// TODO move default list into setter doc comments
 /// Creates a new subscriber with default options:
 ///
 /// - no_local: False
@@ -147,6 +150,7 @@ pub fn new(client: Client) -> Subscriber {
     qos: gemqtt.AtMostOnce,
     retain_as_published: False,
     retain_handling: SentAlways,
+    properties: gemqtt.Properties(dict.new()),
   )
 }
 
@@ -183,7 +187,36 @@ type SubscribeOption {
   Rh(Int)
 }
 
-// TODO Subscription properties!
+/// Sets an MQTT SUBSCRIBE packet property.  Please note that properties are
+/// not validated prior to being sent to the server.
+///
+/// Available subscribe properties:
+///
+/// - `Subscription-Identifier`: 1 to 268,435,455
+/// - `User-Property`: UTF-8 string pair
+///
+/// Example usage:
+///
+/// ```
+/// client
+/// |> subscriber.new
+/// |> subscriber.set_property("Subscription-Identifier", 42)
+/// |> subscriber.set_property("User-Property", #("prop-name", "prop-value"))
+/// ```
+///
+pub fn set_property(sub: Subscriber, name: String, value: t) -> Subscriber {
+  let gemqtt.Properties(props) = sub.properties
+
+  Subscriber(
+    ..sub,
+    properties: gemqtt.Properties(dict.insert(
+      props,
+      atom.create_from_string(name),
+      dynamic.from(value),
+    )),
+  )
+}
+
 pub fn add(
   sub: Subscriber,
   topics topics: List(String),
@@ -201,20 +234,23 @@ pub fn add(
     Rh(rh),
   ]
 
-  add_(sub.client, opts, topics)
+  let gemqtt.Properties(props) = sub.properties
+
+  add_(sub.client, opts, props, topics)
 }
 
 @external(erlang, "emqtt_ffi", "subscribe")
 fn add_(
   client: Client,
-  opts options: List(SubscribeOption),
-  topics topics: List(String),
+  options: List(SubscribeOption),
+  props: Dict(Atom, Dynamic),
+  topics: List(String),
 ) -> Result(#(Option(Properties), List(Int)), Nil)
 
 @external(erlang, "emqtt_ffi", "unsubscribe")
 pub fn remove(
   client: Client,
-  topics: List(String),
+  topics topics: List(String),
 ) -> Result(#(Option(Properties), List(Int)), Nil)
 
 @external(erlang, "emqtt_ffi", "decode_client")
