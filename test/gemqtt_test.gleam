@@ -2,6 +2,7 @@ import gemqtt
 import gemqtt/publisher
 import gemqtt/subscriber
 import gleam/bit_array
+import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
 import gleam/erlang/process
 import gleam/option.{None, Some}
@@ -9,6 +10,15 @@ import gleam/result
 import gleeunit
 import gleeunit/should
 import helper
+
+// MQTT host to test TLS options against.
+const tls_test_host = "test.mosquitto.org"
+
+// test.mosquitto.org self-signed certificate port.
+const self_signed_port = 8883
+
+// test.mosquitto.org lets-encrypt signed certificate port.
+const letsencrypt_port = 8886
 
 pub fn main() {
   gleeunit.main()
@@ -22,6 +32,76 @@ pub fn connect_test() {
   let assert Ok(Nil) = gemqtt.connect(client)
   let assert Ok(_) = gemqtt.disconnect(client)
   helper.should_exit_normally(client)
+
+  process.trap_exits(False)
+}
+
+// TODO add env var to enable this test.
+// This TLS test depends on an external server and may be flaky.
+pub fn valid_tls_connect_test() {
+  process.trap_exits(True)
+  process.flush_messages()
+
+  // Test against self-signed cert, verification disabled.
+  let assert Ok(client) =
+    gemqtt.new(tls_test_host)
+    |> gemqtt.set_port(self_signed_port)
+    |> gemqtt.set_tls_enabled(True)
+    |> gemqtt.set_tls_opt(
+      "verify",
+      dynamic.from(atom.create_from_string("verify_none")),
+    )
+    |> gemqtt.set_tls_opt("cacerts", cacerts_get())
+    |> gemqtt.start_link()
+
+  let assert Ok(Nil) = gemqtt.connect(client)
+  let assert Ok(_) = gemqtt.disconnect(client)
+  helper.should_exit_normally(client)
+
+  // TODO experiment with SNI settings on newer emqtt/otp versions
+  //
+  // Test against CA signed cert, verification enabled.
+  let assert Ok(client) =
+    gemqtt.new(tls_test_host)
+    |> gemqtt.set_port(letsencrypt_port)
+    |> gemqtt.set_tls_enabled(True)
+    |> gemqtt.set_tls_opt(
+      "verify",
+      dynamic.from(atom.create_from_string("verify_peer")),
+    )
+    |> gemqtt.set_tls_opt(
+      "server_name_indication",
+      dynamic.from(atom.create_from_string("disable")),
+    )
+    |> gemqtt.set_tls_opt("cacerts", cacerts_get())
+    |> gemqtt.start_link()
+
+  let assert Ok(Nil) = gemqtt.connect(client)
+  let assert Ok(_) = gemqtt.disconnect(client)
+  helper.should_exit_normally(client)
+
+  process.trap_exits(False)
+}
+
+// TODO add env var to enable this test.
+// This TLS test depends on an external server and may be flaky.
+pub fn invalid_tls_connect_test() {
+  process.trap_exits(True)
+  process.flush_messages()
+
+  let assert Ok(client) =
+    gemqtt.new(tls_test_host)
+    |> gemqtt.set_port(self_signed_port)
+    |> gemqtt.set_tls_enabled(True)
+    |> gemqtt.set_tls_opt(
+      "verify",
+      dynamic.from(atom.create_from_string("verify_peer")),
+    )
+    |> gemqtt.set_tls_opt("cacerts", cacerts_get())
+    |> gemqtt.start_link()
+
+  let assert Error(gemqtt.UnknownCa) = gemqtt.connect(client)
+  helper.should_exit_abnormally(client)
 
   process.trap_exits(False)
 }
@@ -195,3 +275,7 @@ pub fn roundtrip_test() {
   let assert Ok(_) = subscriber.remove(client, [topic])
   let assert Ok(_) = gemqtt.disconnect(client)
 }
+
+// Returns the OS cacerts.
+@external(erlang, "public_key", "cacerts_get")
+fn cacerts_get() -> Dynamic
