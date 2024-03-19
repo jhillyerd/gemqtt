@@ -5,6 +5,8 @@ description = "Gleam wrapper of the emqx/emqtt client library"
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "jhillyerd", repo = "gemqtt" }
 
+internal_modules = ["gemqtt/ffi/*"]
+
 [dependencies]
 gleam_stdlib = "~> 0.34 or ~> 1.0"
 gleam_erlang = "~> 0.24"

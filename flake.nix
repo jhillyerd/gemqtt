@@ -14,6 +14,7 @@
           gleam
           mosquitto
           rebar3
+          watchexec
         ];
       };
     }
