@@ -64,6 +64,7 @@ normalize({ok, undefined}) -> {ok, nil};
 normalize({ok, Pid}) when is_pid(Pid) -> {ok, {client, Pid}};
 normalize({ok, T}) -> {ok, T};
 normalize({ok, T, U}) -> {ok, {T, U}};
+normalize({error, {tls_alert, {T, _}}}) -> {error, T};
 normalize({error, T}) -> {error, T}.
 
 % Normalize emqtt return values for Result(Option(t), e).

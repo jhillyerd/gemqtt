@@ -1,9 +1,9 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
-import gleam/option.{type Option}
 import gleam/erlang/atom.{type Atom}
 import gleam/erlang/charlist
 import gleam/erlang/process
+import gleam/option.{type Option}
 
 /// Errors that can occur when working with MQTT connections.
 ///
@@ -12,7 +12,7 @@ pub type Error {
   BadProperty(Option(Atom))
   Noproc
 
-  // https://www.erlang.org/doc/man/inet#type-posix
+  // Network errors; https://www.erlang.org/doc/man/inet#type-posix
   Closed
   Timeout
   Eaddrinuse
@@ -44,10 +44,45 @@ pub type Error {
   Exbadport
   Exbadseq
   Nxdomain
+
+  // TLS errors; https://www.erlang.org/doc/man/ssl#type-reason
+  AccessDenied
+  BadCertificate
+  BadCertificateHashValue
+  BadCertificateStatusResponse
+  BadRecordMac
+  CertificateExpired
+  CertificateRevoked
+  CertificateUnknown
+  CertificateUnobtainable
+  CloseNotify
+  DecodeError
+  DecryptError
+  ExportRestriction
+  HandshakeFailure
+  IllegalParameter
+  InappropriateFallback
+  InsufficientSecurity
+  InternalError
+  NoApplicationProtocol
+  NoRenegotiation
+  ProtocolVersion
+  RecordOverflow
+  UnexpectedMessage
+  UnknownCa
+  UnknownPskIdentity
+  UnrecognizedName
+  UnsupportedCertificate
+  UnsupportedExtension
+  UserCanceled
 }
 
 pub opaque type Options {
-  Options(options: Dict(Atom, Dynamic), properties: Properties)
+  Options(
+    options: Dict(Atom, Dynamic),
+    tls_options: Dict(Atom, Dynamic),
+    properties: Properties,
+  )
 }
 
 pub type Properties {
@@ -63,10 +98,8 @@ pub type Qos {
   ExactlyOnce
 }
 
-// TODO: Missing options
+// TODO Missing options
 // TcpOpts
-// Ssl
-// SslOpts
 // WsPath
 // BridgeMode
 // ProtoVer
@@ -80,7 +113,6 @@ pub type Qos {
 // WillProps
 // AckTimeout
 // ForcePing
-// Properties
 
 pub fn new(host: String) -> Options {
   let host_value =
@@ -92,7 +124,11 @@ pub fn new(host: String) -> Options {
     dict.new()
     |> dict.insert(atom.create_from_string("host"), host_value)
 
-  Options(options: opts, properties: Properties(dict.new()))
+  Options(
+    options: opts,
+    tls_options: dict.new(),
+    properties: Properties(dict.new()),
+  )
 }
 
 pub fn set_auth(opts: Options, username: String, password: String) -> Options {
@@ -134,6 +170,21 @@ pub fn set_port(opts: Options, port: Int) -> Options {
   set_option(opts, atom.create_from_string("port"), port)
 }
 
+pub fn set_tls_enabled(opts: Options, tls: Bool) -> Options {
+  set_option(opts, atom.create_from_string("ssl"), tls)
+}
+
+pub fn set_tls_opt(opts: Options, name: String, value: Dynamic) -> Options {
+  Options(
+    ..opts,
+    tls_options: dict.insert(
+      opts.tls_options,
+      atom.create_from_string(name),
+      dynamic.from(value),
+    ),
+  )
+}
+
 fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
   Options(..opts, options: dict.insert(opts.options, name, dynamic.from(value)))
 }
@@ -163,7 +214,7 @@ fn set_option(opts: Options, name: atom.Atom, value: t) -> Options {
 /// ```
 ///
 pub fn set_property(opts: Options, name: String, value: t) -> Options {
-  let Options(options: _, properties: Properties(props)) = opts
+  let Properties(props) = opts.properties
   Options(
     ..opts,
     properties: Properties(dict.insert(
@@ -192,12 +243,21 @@ pub fn pid_of(client: Client) -> process.Pid {
 /// connect to the MQTT server.
 ///
 pub fn start_link(opts: Options) -> Result(Client, Error) {
-  let Options(options: options, properties: Properties(properties)) = opts
+  let Options(
+    options: options,
+    tls_options: tls_options,
+    properties: Properties(properties),
+  ) = opts
+
   let options =
-    dict.insert(
-      options,
+    options
+    |> dict.insert(
       atom.create_from_string("properties"),
       dynamic.from(properties),
+    )
+    |> dict.insert(
+      atom.create_from_string("ssl_opts"),
+      dynamic.from(dict.to_list(tls_options)),
     )
   start_link_(options)
 }
