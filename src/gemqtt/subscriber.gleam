@@ -1,3 +1,17 @@
+//// Module for subscribing to messages from an MQTT server.
+////
+//// Example usage:
+////
+////     client
+////     |> subscriber.new
+////     |> subscriber.set_qos(gemqtt.AtLestOnce)
+////     |> subscriber.add(["my/topic", "another/topic"])
+////
+////     let assert Ok(got_msg) =
+////       process.new_selector()
+////       |> subscriber.selecting_mqtt_messages(Ok)
+////       |> process.select_forever
+
 import gemqtt.{type Client, type Properties}
 import gemqtt/ffi/puback
 import gemqtt/ffi/publish
@@ -11,6 +25,8 @@ import gleam/int
 import gleam/option.{type Option}
 import gleam/result.{try}
 
+/// Representation of a message received from an MQTT topic.
+///
 pub type Message {
   Message(
     client: Client,
@@ -23,10 +39,10 @@ pub type Message {
   )
 }
 
-/// Configure a selector to receive messages from MQTT clients.
+/// Configures a selector to receive messages from MQTT clients.
 ///
-/// Note this will receive messages from all MQTT clients that the process
-/// controls, rather than any specific one. If you wish to only handle
+/// Please note this will receive messages from all MQTT clients that the
+/// process controls, rather than any specific one. If you wish to only handle
 /// messages from one client then use one process per client.
 ///
 pub fn selecting_mqtt_messages(
@@ -39,7 +55,7 @@ pub fn selecting_mqtt_messages(
   |> process.selecting_record2(publish, map_dynamic_message(mapper))
 }
 
-/// Decodes a message received by emqtt. Prefer fn `selecting_mqtt_messages`
+/// Decodes a message received by emqtt. Prefer `selecting_mqtt_messages`
 /// over using this directly.
 ///
 pub fn message_from_dynamic(
@@ -72,14 +88,16 @@ fn map_dynamic_message(mapper: fn(Message) -> t) -> fn(Dynamic) -> t {
   }
 }
 
+/// Packet sent by MQTT server to acknowledge a published message.
+///
 pub type PubAck {
   PubAck(packet_id: Int, reason_code: Int)
 }
 
-/// Configure a selector to receive pub-acks from MQTT clients.
+/// Configures a selector to receive pub-acks from MQTT clients.
 ///
-/// Note this will receive pub-acks from all MQTT clients that the process
-/// controls, rather than any specific one.
+/// Please note this will receive pub-acks from all MQTT clients that the
+/// process controls, rather than any specific one.
 ///
 pub fn selecting_mqtt_pubacks(
   selector: process.Selector(t),
@@ -91,7 +109,7 @@ pub fn selecting_mqtt_pubacks(
   |> process.selecting_record2(puback, map_dynamic_puback(mapper))
 }
 
-/// Decodes a pub-ack received by emqtt. Prefer fn `selecting_mqtt_pubacks`
+/// Decodes a pub-ack received by emqtt. Prefer `selecting_mqtt_pubacks`
 /// over using this directly.
 ///
 pub fn puback_from_dynamic(
@@ -111,7 +129,9 @@ fn map_dynamic_puback(mapper: fn(PubAck) -> t) -> fn(Dynamic) -> t {
   }
 }
 
-/// Controls whether retained messages are sent when a subscription is added.
+/// Represents how retained messages on a topic are handled when a subscription
+/// to it is added.
+///
 pub type RetainHandling {
   /// Retained messages are sent whenever a subscription is established.
   SentAlways
@@ -124,6 +144,9 @@ pub type RetainHandling {
   SentNever
 }
 
+/// Subscriber holds the configuration for subscribing to one or more topics.
+/// Create it with the `new` function.
+///
 pub opaque type Subscriber {
   Subscriber(
     client: Client,
@@ -135,13 +158,8 @@ pub opaque type Subscriber {
   )
 }
 
-// TODO move default list into setter doc comments
-/// Creates a new subscriber with default options:
-///
-/// - no_local: False
-/// - qos: AtMostOnce
-/// - retain_as_published: False
-/// - retain_handling: SentAlways
+/// Creates a new subscriber with the default options.  Defaults are documented
+/// on each set function.
 ///
 pub fn new(client: Client) -> Subscriber {
   Subscriber(
@@ -154,14 +172,33 @@ pub fn new(client: Client) -> Subscriber {
   )
 }
 
+/// Controls whether a subscriber will see messages published by the same
+/// client ID as itself; defaults to true.
+///
+/// Warning: doesn't seem to work correctly, possibly an emqtt or mosquitto
+/// issue.
+///
 pub fn set_local_echo(subscriber: Subscriber, value: Bool) -> Subscriber {
   Subscriber(..subscriber, no_local: !value)
 }
 
+/// Specifies the highest QoS level for topics on this subscriber.
+///
+/// (low) `AtMostOnce` < `AtLeastOnce` < `ExactlyOnce` (high).
+///
+/// Defaults to `AtMostOnce`.
+///
 pub fn set_qos(subscriber: Subscriber, value: gemqtt.Qos) -> Subscriber {
   Subscriber(..subscriber, qos: value)
 }
 
+/// Controls whether the subscriptions will have the "retain as published"
+/// option set. When true, the retain flag on an incoming message will be
+/// exactly as set by the publishing client, rather than indicating whether the
+/// message is fresh/stale.
+///
+/// Defaults to false.
+///
 pub fn set_retain_as_published(
   subscriber: Subscriber,
   value: Bool,
@@ -169,6 +206,11 @@ pub fn set_retain_as_published(
   Subscriber(..subscriber, retain_as_published: value)
 }
 
+/// Controls how retained messages are handled when a subscription is added.
+/// See the documentaton on the `RetainHandling` type for more information.
+///
+/// Defaults to `SentAlways`.
+///
 pub fn set_retain_handling(
   subscriber: Subscriber,
   value: RetainHandling,
@@ -176,33 +218,20 @@ pub fn set_retain_handling(
   Subscriber(..subscriber, retain_handling: value)
 }
 
-type SubscribeOption {
-  // No Local
-  Nl(Bool)
-  // Quality of Service
-  Qos(gemqtt.Qos)
-  // Retain as Published
-  Rap(Bool)
-  // Retain Handling
-  Rh(Int)
-}
-
 /// Sets an MQTT SUBSCRIBE packet property.  Please note that properties are
 /// not validated prior to being sent to the server.
 ///
-/// Available subscribe properties:
+/// Available properties:
 ///
 /// - `Subscription-Identifier`: 1 to 268,435,455
 /// - `User-Property`: UTF-8 string pair
 ///
 /// Example usage:
 ///
-/// ```
-/// client
-/// |> subscriber.new
-/// |> subscriber.set_property("Subscription-Identifier", 42)
-/// |> subscriber.set_property("User-Property", #("prop-name", "prop-value"))
-/// ```
+///     client
+///     |> subscriber.new
+///     |> subscriber.set_property("Subscription-Identifier", 42)
+///     |> subscriber.set_property("User-Property", #("prop-name", "prop-value"))
 ///
 pub fn set_property(sub: Subscriber, name: String, value: t) -> Subscriber {
   let gemqtt.Properties(props) = sub.properties
@@ -215,6 +244,17 @@ pub fn set_property(sub: Subscriber, name: String, value: t) -> Subscriber {
       dynamic.from(value),
     )),
   )
+}
+
+type SubscribeOption {
+  // No Local
+  Nl(Bool)
+  // Quality of Service
+  Qos(gemqtt.Qos)
+  // Retain as Published
+  Rap(Bool)
+  // Retain Handling
+  Rh(Int)
 }
 
 pub fn add(
