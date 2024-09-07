@@ -4,8 +4,8 @@ import gleam/dynamic.{type Dynamic}
 import gleam/erlang/process
 import gleam/function.{identity}
 import gleam/io
-import gleam/string
 import gleam/result
+import gleam/string
 import gleeunit/should
 
 /// External test MQTT server host.  Must accept anonymous connections.
