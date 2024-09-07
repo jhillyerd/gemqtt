@@ -17,7 +17,7 @@ import gemqtt/ffi/puback
 import gemqtt/ffi/publish
 import gleam/dict.{type Dict}
 import gleam/dynamic.{
-  type Dynamic, bit_array, bool, field, int, optional_field, string,
+  type Dynamic, bit_array, bool, field, int, optional, string,
 }
 import gleam/erlang/atom.{type Atom}
 import gleam/erlang/process
@@ -63,7 +63,7 @@ pub fn message_from_dynamic(
 ) -> Result(Message, List(dynamic.DecodeError)) {
   use client <- try(field(publish.ClientPid, decode_client)(input))
   use duplicate <- try(field(publish.Dup, bool)(input))
-  use packet_id <- try(optional_field(publish.PacketId, int)(input))
+  use packet_id <- try(field(publish.PacketId, optional(int))(input))
   use payload <- try(field(publish.Payload, bit_array)(input))
   use qos <- try(field(publish.Qos, decode_qos)(input))
   use retain <- try(field(publish.Retain, bool)(input))
