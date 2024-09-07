@@ -22,7 +22,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: "25.3.2"
-          gleam-version: "1.0.0"
+          gleam-version: "1.4.1"
           rebar3-version: "3"
 
       - name: Check MQTT server health
