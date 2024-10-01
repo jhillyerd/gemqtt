@@ -1,5 +1,5 @@
 name = "gemqtt"
-version = "0.1.0"
+version = "0.1.1"
 
 description = "Gleam wrapper of the emqx/emqtt client library"
 licences = ["Apache-2.0"]
